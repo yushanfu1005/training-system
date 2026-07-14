@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教育訓練管理系統</title>
+<style>
+  :root{
+    --ink:#1b2430;
+    --ink-soft:#4d5a6b;
+    --paper:#f5f7f9;
+    --panel:#ffffff;
+    --line:#e2e6ea;
+    --navy:#1f3a5f;
+    --navy-deep:#152943;
+    --gold:#c8952c;
+    --gold-soft:#f4e6c8;
+    --ok:#2f7a4f;
+    --ok-bg:#e6f4ea;
+    --warn:#b3541e;
+    --warn-bg:#fbe9dd;
+    --pending:#6b6f76;
+    --pending-bg:#eceef0;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--gold-soft);}
+
+  /* ---------- Login ---------- */
+  #loginScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(200,149,44,0.18), transparent 45%),
+      linear-gradient(160deg, var(--navy-deep), var(--navy) 60%, #24466f);
+    padding:24px;
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    background:var(--panel);
+    border-radius:16px;
+    padding:40px 36px 32px;
+    box-shadow:0 24px 60px rgba(10,20,35,0.35);
+  }
+  .login-eyebrow{
+    font-size:12px;
+    letter-spacing:.18em;
+    color:var(--gold);
+    font-weight:700;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .login-brand-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:24px;
+  }
+  .login-icon-box{
+    width:44px; height:44px; flex-shrink:0;
+    border-radius:11px;
+    background:var(--navy-deep);
+    color:#fff;
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .login-brand-title{font-size:15px; font-weight:800; color:var(--ink); letter-spacing:.01em;}
+  .login-brand-sub{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .login-title{
+    font-size:22px;
+    font-weight:800;
+    margin:0 0 4px;
+    letter-spacing:.02em;
+  }
+  .login-sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 28px;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    letter-spacing:.03em;
+  }
+  .field input[type=text],
+  .field input[type=password],
+  .field input[type=date],
+  .field select{
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--ink);
+    background:#fff;
+    transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus{
+    outline:none;
+    border-color:var(--navy);
+  }
+  .remember-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:22px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .remember-row input{accent-color:var(--navy);}
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    border:none;
+    border-radius:8px;
+    font-family:inherit;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    padding:11px 18px;
+    transition:transform .1s, box-shadow .15s, background .15s;
+    white-space:nowrap;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{
+    background:var(--navy);
+    color:#fff;
+    width:100%;
+  }
+  .btn-primary:hover{background:var(--navy-deep);}
+  .btn-gold{
+    background:var(--gold);
+    color:#3a2a05;
+  }
+  .btn-gold:hover{filter:brightness(1.05);}
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1.5px solid var(--line);
+  }
+  .btn-ghost:hover{border-color:var(--navy);color:var(--navy);}
+  .btn-danger{
+    background:#fff;
+    color:#b3311f;
+    border:1.5px solid #f0c6bd;
+  }
+  .btn-danger:hover{background:#fdeeeb;}
+  .btn-sm{padding:6px 12px; font-size:12.5px;}
+  .login-error{
+    background:#fdeeeb;
+    color:#b3311f;
+    border:1px solid #f0c6bd;
+    border-radius:8px;
+    padding:9px 12px;
+    font-size:12.5px;
+    margin-bottom:16px;
+    display:none;
+  }
+  .login-hint{
+    margin-top:20px;
+    font-size:11.5px;
+    color:#9aa4b0;
+    line-height:1.6;
+    border-top:1px dashed var(--line);
+    padding-top:14px;
+  }
+
+  /* ---------- App shell ---------- */
+  #app{display:none; min-height:100vh;}
+  .shell{display:flex; min-height:100vh;}
+  .sidebar{
+    width:220px;
+    background:var(--navy-deep);
+    color:#dfe6ee;
+    flex-shrink:0;
+    transition:width .18s ease;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+  .sidebar.collapsed{width:64px;}
+  .sidebar-head{
+    padding:20px 18px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .brand-mark{
+    width:30px;height:30px;flex-shrink:0;
+    border-radius:7px;
+    background:var(--gold);
+    color:#3a2a05;
+    font-weight:800;
+    font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .brand-text{font-size:14px;font-weight:800; white-space:nowrap; overflow:hidden;}
+  .sidebar.collapsed .brand-text, .sidebar.collapsed .nav-label, .sidebar.collapsed .sidebar-foot span{display:none;}
+  .toggle-btn{
+    position:absolute; top:16px; right:-13px;
+    width:26px;height:26px;border-radius:50%;
+    background:var(--gold); color:#3a2a05; border:2px solid var(--paper);
+    cursor:pointer; font-size:12px; font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,0.25);
+  }
+  .nav-list{list-style:none; margin:14px 0; padding:0; flex:1;}
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:11px 18px;
+    cursor:pointer;
+    font-size:13.5px;
+    font-weight:600;
+    color:#c3ccd8;
+    border-left:3px solid transparent;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .nav-item .dot{
+    width:8px;height:8px;border-radius:2px;background:#5a7196;flex-shrink:0;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.05); color:#fff;}
+  .nav-item.active{
+    background:rgba(200,149,44,0.14);
+    color:#fff;
+    border-left-color:var(--gold);
+  }
+  .nav-item.active .dot{background:var(--gold);}
+  .sidebar-foot{
+    padding:14px 18px 18px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    font-size:12px;
+    color:#93a1b3;
+  }
+  .sidebar-foot .who{font-weight:700; color:#e9edf2; margin-bottom:2px;}
+  .sidebar-foot .role-badge{
+    display:inline-block; margin-top:6px;
+    font-size:10.5px; font-weight:700; letter-spacing:.04em;
+    background:rgba(200,149,44,0.18); color:var(--gold);
+    padding:2px 8px; border-radius:20px;
+  }
+  .logout-link{
+    display:block; margin-top:12px; cursor:pointer;
+    color:#93a1b3; font-size:12px; text-decoration:underline;
+  }
+  .logout-link:hover{color:#fff;}
+
+  .main{flex:1; display:flex; flex-direction:column; min-width:0;}
+  .topbar{
+    min-height:60px; background:var(--panel); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 26px; gap:12px; flex-wrap:wrap;
+  }
+  .topbar h1{font-size:17px; margin:0; font-weight:800;}
+  .topbar .page-desc{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .content{padding:26px; flex:1; overflow:auto;}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    margin-bottom:20px;
+  }
+  .panel-title{
+    font-size:14px; font-weight:800; margin:0 0 14px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .toolbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-size:11.5px; letter-spacing:.03em; text-transform:uppercase;
+    color:var(--ink-soft); border-bottom:2px solid var(--line);
+    padding:9px 10px; white-space:nowrap;
+  }
+  tbody td{border-bottom:1px solid var(--line); padding:8px 10px; vertical-align:middle;}
+  tbody tr:hover{background:#fafbfc;}
+  .cell-input{
+    width:100%; border:1px solid transparent; background:transparent;
+    padding:6px 7px; border-radius:6px; font-size:13px; font-family:inherit; color:var(--ink);
+  }
+  .cell-input:hover{border-color:var(--line);}
+  .cell-input:focus{outline:none; border-color:var(--navy); background:#fff;}
+  select.cell-input{cursor:pointer;}
+  textarea.cell-input{resize:vertical; min-height:34px; line-height:1.4;}
+  .item-name-cell{display:flex; align-items:baseline; gap:0;}
+
+  .item-dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    margin-right:7px; flex-shrink:0; vertical-align:middle; position:relative; top:-1px;
+  }
+  .dot-grey{background:#9aa4b0;}
+  .dot-green{background:var(--ok);}
+  .dot-red{background:#c0392b;}
+
+  .status-pill{
+    display:inline-block; padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700;
+    border:1px solid transparent;
+  }
+  .status-ok{background:var(--ok-bg); color:var(--ok);}
+  .status-warn{background:var(--warn-bg); color:var(--warn);}
+  .status-pending{background:var(--pending-bg); color:var(--pending);}
+
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--ink-soft);
+  }
+  .empty-state .big{font-size:34px; margin-bottom:6px;}
+  .empty-state h2{font-size:16px; margin:6px 0 4px; color:var(--ink);}
+  .empty-state p{font-size:13px; margin:0;}
+
+  .row-x{
+    color:#b3311f; cursor:pointer; font-size:16px; line-height:1; padding:4px 6px;
+    border-radius:6px;
+  }
+  .row-x:hover{background:#fdeeeb;}
+
+  /* modal */
+  .modal-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(15,25,40,0.5);
+    align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .modal-backdrop.show{display:flex;}
+  .modal{
+    background:#fff; border-radius:14px; width:100%; max-width:440px;
+    padding:26px; max-height:85vh; overflow:auto;
+  }
+  .modal h3{margin:0 0 4px; font-size:16px; font-weight:800;}
+  .modal .sub{font-size:12.5px; color:var(--ink-soft); margin:0 0 18px;}
+  .emp-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 10px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px;
+    font-size:13.5px;
+  }
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy-deep); color:#fff; padding:11px 20px; border-radius:8px;
+    font-size:13px; font-weight:600; opacity:0; transition:all .25s; z-index:100;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .badge-soon{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11.5px; font-weight:700; color:var(--gold); background:var(--gold-soft);
+    padding:4px 10px; border-radius:20px;
+  }
+
+  /* ---- employee list ---- */
+  .seg-tabs{display:flex; gap:8px; margin-bottom:16px;}
+  .seg-tab{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink-soft);
+    font-family:inherit; font-size:13px; font-weight:700; padding:8px 16px;
+    border-radius:20px; cursor:pointer; transition:all .15s;
+  }
+  .seg-tab:hover{border-color:var(--navy); color:var(--navy);}
+  .seg-tab.active{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .emp-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
+  .emp-card{
+    border:1px solid var(--line); border-radius:12px; padding:16px;
+    cursor:pointer; background:#fff; transition:border-color .15s, box-shadow .15s;
+    position:relative;
+  }
+  .emp-card:hover{border-color:var(--navy); box-shadow:0 6px 18px rgba(20,40,70,0.08);}
+  .emp-card .name{font-size:15px; font-weight:800; margin-bottom:4px;}
+  .emp-card .meta{font-size:12px; color:var(--ink-soft); line-height:1.7;}
+  .emp-card .progress-wrap{margin-top:10px; height:6px; background:var(--line); border-radius:4px; overflow:hidden;}
+  .emp-card .progress-bar{height:100%; background:var(--gold); border-radius:4px;}
+  .emp-card .progress-label{font-size:11px; color:var(--ink-soft); margin-top:5px;}
+  .emp-card .del-x{
+    position:absolute; top:10px; right:10px; color:#b3311f; font-size:14px; padding:3px 6px;
+    border-radius:6px; opacity:0; transition:opacity .15s;
+  }
+  .emp-card:hover .del-x{opacity:1;}
+  .emp-card .del-x:hover{background:#fdeeeb;}
+
+  /* ---- detail header ---- */
+  .detail-header{
+    background:var(--navy-deep); color:#fff; border-radius:var(--radius);
+    padding:20px 24px; margin-bottom:20px;
+  }
+  .detail-header .back-link{
+    color:#c9d3e0; font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+    margin-bottom:12px;
+  }
+  .detail-header .back-link:hover{color:#fff;}
+  .detail-header h2{margin:0 0 14px; font-size:19px; font-weight:800;}
+  .hdr-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px;}
+  .hdr-field label{display:block; font-size:11px; color:#a9b6c8; margin-bottom:5px; letter-spacing:.03em;}
+  .hdr-field input, .hdr-field select{
+    width:100%; padding:8px 10px; border-radius:7px; border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.08); color:#fff; font-size:13px; font-family:inherit;
+  }
+  .hdr-field select option{color:#1b2430;}
+  .hdr-field input::placeholder{color:#8ea0b8;}
+  .hdr-field input:focus, .hdr-field select:focus{outline:none; border-color:var(--gold); background:rgba(255,255,255,0.14);}
+  .hdr-field-row{display:flex; gap:6px; align-items:center;}
+  .hdr-readonly{
+    padding:8px 10px; border-radius:7px; border:1px solid rgba(255,255,255,0.18);
+    background:rgba(255,255,255,0.05); color:#dfe6ee; font-size:13px;
+  }
+  .hdr-readonly.overdue{border-color:#e0a06b; background:rgba(224,90,50,0.18); color:#ffd9c2; font-weight:700;}
+
+  .section-title{
+    display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; margin:0 0 14px;
+  }
+  .section-title .tag{
+    font-size:11px; font-weight:700; color:var(--navy); background:#e7edf5; padding:2px 9px; border-radius:20px;
+  }
+  .add-item-row{display:flex; gap:8px; align-items:center; padding-top:8px;}
+  .add-item-row input{border:1px solid var(--line); max-width:280px;}
+
+  /* ---- 規則頁 ---- */
+  .stage-timeline{display:flex; flex-direction:column; align-items:stretch;}
+  .stage-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px 24px;
+  }
+  .stage-card-head{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .stage-badge{
+    font-size:10.5px; font-weight:800; letter-spacing:.06em; color:#fff;
+    background:var(--navy); padding:4px 10px; border-radius:20px;
+  }
+  .stage-card-head h3{margin:0; font-size:17px; font-weight:800;}
+  .rule-row{
+    display:grid; grid-template-columns:180px 1fr; gap:14px;
+    padding:10px 0; border-top:1px solid var(--line);
+    font-size:13.5px; line-height:1.7;
+  }
+  .rule-row:first-of-type{border-top:none;}
+  .rule-label{color:var(--ink-soft); font-weight:700;}
+  .rule-value{color:var(--ink);}
+  .stage-connector{
+    text-align:center; color:var(--gold); font-size:20px; font-weight:800;
+    padding:6px 0;
+  }
+  .rule-mini-timeline{
+    display:flex; align-items:stretch; flex-wrap:wrap; gap:0;
+    margin-top:16px; border-top:1px dashed var(--line); padding-top:16px;
+  }
+  .rule-mini-step{
+    flex:1; min-width:120px; background:var(--paper); border:1px solid var(--line);
+    border-radius:8px; padding:10px 12px;
+  }
+  .rule-mini-week{font-size:11.5px; font-weight:800; color:var(--navy); margin-bottom:4px;}
+  .rule-mini-desc{font-size:12px; color:var(--ink-soft); line-height:1.5;}
+  .rule-mini-arrow{
+    display:flex; align-items:center; justify-content:center; color:#c3ccd8;
+    font-size:16px; padding:0 6px;
+  }
+  .rule-linkage{
+    margin-top:16px; font-size:12px; color:var(--navy);
+    background:#eef3f9; border:1px solid #dbe6f2; border-radius:8px; padding:9px 12px;
+  }
+  @media (max-width:640px){
+    .rule-row{grid-template-columns:1fr;}
+    .rule-mini-timeline{flex-direction:column;}
+    .rule-mini-arrow{transform:rotate(90deg); padding:2px 0;}
+  }
+
+  /* ---- 店務測驗：完整題庫 ---- */
+  .bank-list{display:flex; flex-direction:column; gap:14px; margin-bottom:18px;}
+  .bank-card{border:1px solid var(--line); border-radius:10px; padding:14px 16px; background:var(--paper);}
+  .bank-card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+  .bank-cat-label{font-size:11px; font-weight:700; color:var(--navy); background:#e7edf5; padding:3px 9px; border-radius:20px;}
+  .bank-cat-input{max-width:220px; border:1px solid var(--line); font-size:11.5px; font-weight:700; color:var(--navy);}
+  .bank-stem-label{font-size:13.5px; font-weight:600; margin-bottom:8px; line-height:1.6;}
+  .bank-stem-input{border:1px solid var(--line); font-weight:600; margin-bottom:8px; background:#fff;}
+  .bank-options{display:flex; flex-direction:column; gap:6px;}
+  .bank-opt-row{display:flex; align-items:center; gap:8px; font-size:13px; padding:4px 8px; border-radius:6px;}
+  .bank-opt-row.correct{background:var(--ok-bg);}
+  .bank-opt-letter{width:18px; height:18px; border-radius:50%; background:#dfe6ee; color:var(--ink); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .bank-opt-text{flex:1;}
+  .bank-correct-radio{font-size:11.5px; color:var(--ink-soft); display:flex; align-items:center; gap:4px; white-space:nowrap;}
+  .bank-correct-tag{font-size:11px; font-weight:700; color:var(--ok);}
+  .bank-ref-answer{font-size:13px;}
+  .bank-ref-answer label{display:block; font-size:11px; font-weight:700; color:var(--ink-soft); margin-bottom:4px;}
+  .bank-add-form{border-top:1px dashed var(--line); margin-top:6px; padding-top:16px;}
+
+  /* ---- 店務測驗：正式考題 ---- */
+  .current-exam-box{border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; background:var(--paper);}
+  .current-exam-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:13px; margin-bottom:12px;}
+  .current-exam-list{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:14px;}
+  .current-exam-list li{font-size:13px;}
+  .cq-cat{font-size:11px; font-weight:700; color:var(--navy); margin-bottom:3px;}
+  .cq-stem{font-weight:600; margin-bottom:6px; line-height:1.6;}
+  .cq-opts div{padding:2px 0; color:var(--ink-soft);}
+  .cq-opts .cq-correct{color:var(--ok); font-weight:700;}
+  .cq-answer{color:var(--ink-soft);}
+  .grade-total-preview{font-size:13.5px; background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:4px 0 6px;}
+  .retake-tag{display:inline-block; font-size:10.5px; font-weight:700; color:var(--warn); background:var(--warn-bg); padding:1px 8px; border-radius:20px; margin-left:2px;}
+
+  /* ---- 列印樣式 ---- */
+  #printArea{display:none;}
+  /* ---- 設定：組織架構 ---- */
+  .org-card{margin-bottom:18px;}
+  .org-card-head{display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line);}
+  .org-class-title{font-size:16px; font-weight:800;}
+  .org-class-fields{display:flex; gap:14px; flex-wrap:wrap;}
+  .org-class-fields .field{min-width:120px;}
+  .hdr-readonly-light{padding:8px 10px; border-radius:7px; border:1px solid var(--line); background:var(--paper); font-size:13px; color:var(--ink);}
+  .org-store-list{display:flex; flex-direction:column; gap:6px;}
+  .org-store-row{
+    display:grid; grid-template-columns:90px 1fr 130px 30px; gap:8px; align-items:center;
+    padding:4px 0;
+  }
+  .org-store-header{font-size:11px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em; padding-bottom:6px; border-bottom:2px solid var(--line);}
+  .org-store-code-label, .org-store-name-label, .org-store-manager-label{font-size:13px;}
+  .org-store-code-label{color:var(--ink-soft);}
+
+  @media print{
+    body *{visibility:hidden;}
+    #printArea, #printArea *{visibility:visible;}
+    #printArea{display:block; position:absolute; top:0; left:0; width:100%; padding:20px;}
+    .print-header h1{font-size:18px; margin:0 0 6px;}
+    .print-meta{font-size:12.5px; margin-bottom:16px;}
+    .print-q{margin-bottom:14px; font-size:13px; page-break-inside:avoid;}
+    .print-q-head{font-weight:700; margin-bottom:6px; line-height:1.6;}
+    .print-opts div{padding:2px 0 2px 14px;}
+    .print-opt-correct{font-weight:700;}
+    .print-blank-lines .print-line{border-bottom:1px solid #999; height:22px; margin:0 0 4px 14px;}
+    .print-answer-line{padding-left:14px;}
+  }
+
+  @media (max-width:720px){
+    .sidebar{position:fixed; z-index:40; height:100%;}
+    .main{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand-row">
+      <div class="login-icon-box">🎓</div>
+      <div>
+        <div class="login-brand-title">教育訓練管理系統</div>
+        <div class="login-brand-sub">新人學習與考核管理平台</div>
+      </div>
+    </div>
+    <h1 class="login-title">歡迎登入</h1>
+    <p class="login-sub">請輸入帳號與密碼以繼續</p>
+
+    <div class="login-error" id="loginError">帳號或密碼錯誤，請再試一次。</div>
+
+    <div class="field">
+      <label>使用者代號</label>
+      <input type="text" id="loginUser" autocomplete="username" placeholder="請輸入帳號">
+    </div>
+    <div class="field">
+      <label>密碼</label>
+      <input type="password" id="loginPass" autocomplete="current-password" placeholder="請輸入密碼">
+    </div>
+    <div class="remember-row">
+      <input type="checkbox" id="rememberMe">
+      <label for="rememberMe" style="margin:0;">記住我的帳號密碼</label>
+    </div>
+    <button class="btn btn-primary" onclick="handleLogin()">登入系統</button>
+
+    <div class="login-hint">
+      提醒：此原型系統的帳號密碼以明碼儲存於系統資料中，僅適合內部測試使用；正式上線建議改接後端驗證機制以確保帳密安全。
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">‹</div>
+      <div class="sidebar-head">
+        <div class="brand-mark">🎓</div>
+        <div class="brand-text">教育訓練系統</div>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item active" data-tab="training" onclick="switchTab('training')">
+          <span class="dot"></span><span class="nav-label">員工訓練表</span>
+        </li>
+        <li class="nav-item" data-tab="product" onclick="switchTab('product')">
+          <span class="dot"></span><span class="nav-label">商品測驗</span>
+        </li>
+        <li class="nav-item" data-tab="store" onclick="switchTab('store')">
+          <span class="dot"></span><span class="nav-label">店務測驗</span>
+        </li>
+        <li class="nav-item" data-tab="rules" onclick="switchTab('rules')">
+          <span class="dot"></span><span class="nav-label">規則</span>
+        </li>
+        <li class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+          <span class="dot"></span><span class="nav-label">設定</span>
+        </li>
+      </ul>
+      <div class="sidebar-foot">
+        <div class="who" id="whoLabel">—</div>
+        <span id="roleBadgeWrap"></span>
+        <span class="logout-link" onclick="handleLogout()">登出</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="pageTitle">員工訓練表</h1>
+          <div class="page-desc" id="pageDesc">點選員工即可查看該員工的教育訓練總表</div>
+        </div>
+        <div class="toolbar" id="topbarActions"></div>
+      </div>
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+</div>
+
+<!-- employee add modal -->
+<div class="modal-backdrop" id="empModal">
+  <div class="modal">
+    <h3>新增員工</h3>
+    <p class="sub">新增後即會建立該員工的教育訓練總表，可點入填寫詳細資料。</p>
+    <div class="field">
+      <label>姓名 *</label>
+      <input type="text" id="newEmpName" placeholder="請輸入員工姓名">
+    </div>
+    <div class="field">
+      <label>工號</label>
+      <input type="text" id="newEmpCode" placeholder="可留空，之後再補填">
+    </div>
+    <div class="field">
+      <label>課別</label>
+      <select id="newEmpClass">
+        <option value="">請選擇</option>
+        <option value="門市一課">門市一課</option>
+        <option value="門市二課">門市二課</option>
+        <option value="門市三課">門市三課</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEmpModal()">取消</button>
+      <button class="btn btn-gold" onclick="addEmployee()">新增員工</button>
+    </div>
+  </div>
+</div>
+
+<!-- grade score modal -->
+<div class="modal-backdrop" id="gradeModal">
+  <div class="modal">
+    <h3>輸入測驗分數</h3>
+    <p class="sub" id="gradeModalSub"></p>
+    <div class="field">
+      <label>驗收人</label>
+      <input type="text" id="gradeGradedBy" placeholder="請輸入驗收人姓名">
+    </div>
+    <div class="field">
+      <label>店務答對題數（滿分 <span id="gradeStoreMax"></span> 題，每題 5 分）</label>
+      <input type="number" id="gradeStoreCorrect" min="0" step="1" oninput="updateGradeTotalPreview()">
+    </div>
+    <div class="field">
+      <label>商品得分（滿分 50 分，商品題庫尚未建置，請依紙本閱卷手動輸入）</label>
+      <input type="number" id="gradeProductScore" min="0" max="50" step="0.5" oninput="updateGradeTotalPreview()">
+    </div>
+    <div class="grade-total-preview" id="gradeTotalPreview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeGradeModal()">取消</button>
+      <button class="btn btn-gold" onclick="saveGrade()">儲存分數</button>
+    </div>
+  </div>
+</div>
+
+<!-- 列印專用區塊，平常隱藏，列印時透過 CSS 顯示（可於列印視窗另存為 PDF） -->
+<div id="printArea"></div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase（compat 版本，才能直接搭配現有的 onclick="..." 寫法） -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+<script>
+/* ===================== Firebase 連線設定 ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCKek9JCJJe3ZYX7DWlthlXQd-ksUHmxGk",
+  authDomain: "training-system-d085c.firebaseapp.com",
+  projectId: "training-system-d085c",
+  storageBucket: "training-system-d085c.firebasestorage.app",
+  messagingSenderId: "826254507563",
+  appId: "1:826254507563:web:4fd1baea77a921e484f46e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const FIRESTORE_COLLECTION = 'training-system';
+
+/* ===================== 資料模板（比照門市業務部教育訓練總表） ===================== */
+const ONBOARDING_ITEMS = [
+  { item:'公司介紹、品牌核心理念、工作準則', note:'' },
+  { item:'入職單、工作契約填寫', note:'需報到當日拍照回傳/正本最晚月底前寄回總部' },
+  { item:'繳交文件：身份證正反面、國泰帳戶、勞保轉出單', note:'需報到當日拍照回傳/正本最晚月底前寄回總部' },
+  { item:'健檢報告繳交', note:'報到日起一個月內繳交；供餐門市需做膳食方案' },
+  { item:'制服申請', note:'需報到當日回報' },
+  { item:'鼎新POS帳號設定', note:'報到當日設定' },
+  { item:'小後台帳號設定', note:'報到當日設定' },
+  { item:'HR系統、APP設定', note:'報到當日設定' },
+  { item:'Slack 通訊軟體設定/調撥社群 / 百貨群組', note:'報到兩周設定' },
+  { item:'LINE品牌群組', note:'報到兩周設定' },
+  { item:'Email手機設定', note:'報到兩周設定' },
+  { item:'百貨識別證/門禁卡/名牌 申請', note:'報到一周設定；需提供照片一張，生活/證件照不限' },
+];
+
+const TRAINING_CATEGORIES = {
+  '規範': [
+    { item:'制服申請&制服管理辦法' },
+    { item:'費用申請辦法' },
+    { item:'教育訓練管理辦法' },
+    { item:'績效評核管理辦法' },
+    { item:'員工旅遊管理辦法' },
+  ],
+  '餐飲': [
+    { item:'食材進貨處理、備料' },
+    { item:'備品進貨處理' },
+    { item:'餐點製作-充電咖啡因' },
+    { item:'餐點製作-真空果汁飲' },
+    { item:'擺盤照(飲品)' },
+    { item:'用餐完畢流程' },
+    { item:'家電清潔流程' },
+    { item:'消毒清潔流程' },
+    { item:'食材報廢' },
+    { item:'食材盤點' },
+  ],
+  '銷售': [
+    { item:'交易流程(POS機操作、百貨收銀機操作)' },
+    { item:'產品預購流程(POS機操作、訂單填寫、指配送)' },
+    { item:'會員招募' },
+    { item:'受訂單流程(客戶端、公司端)' },
+    { item:'各品牌保固條款' },
+    { item:'大型家電配送' },
+    { item:'門市備貨需求表單使用' },
+    { item:'直出貨況追蹤表單' },
+    { item:'客訴處理' },
+    { item:'員購流程' },
+  ],
+  '店務': [
+    { item:'早班開店整理' },
+    { item:'晚班閉店清潔' },
+    { item:'門市進貨清點&庫存擺放位置' },
+    { item:'門市間調撥流程' },
+    { item:'總倉調撥流程' },
+    { item:'RMA處理' },
+    { item:'DOA處理與回報' },
+    { item:'物流介紹 / 來回件處理辦法' },
+    { item:'叫貨需求流程(總倉需求、雜貨需求)' },
+    { item:'展示機管理(拆箱、回倉、發回需求)' },
+    { item:'每月庫存盤點' },
+    { item:'零用金代墊流程' },
+    { item:'宅配沖銷' },
+  ],
+};
+const CATEGORY_ORDER = ['規範','餐飲','銷售','店務'];
+// 規範不需要驗收人員／驗收日期欄位；其餘分類維持完整欄位
+const CATEGORY_COLUMNS = {
+  '規範': ['guide','trainDate','status'],
+  DEFAULT: ['guide','trainDate','checker','checkDate','status'],
+};
+const COL_LABEL = { guide:'指導人員', trainDate:'訓練日期', checker:'驗收人員', checkDate:'驗收日期', status:'驗收狀況' };
+const STATUS_OPTIONS = ['待驗收','合格','不合格'];
+// 組織架構種子資料：課別代號／課長，以及所屬門市（代號／店名／負責人）
+const SEED_ORG_STRUCTURE = {
+  '門市一課': { code:'3110', leader:'陳思齊', stores:[
+    { code:'31101', name:'三創店', manager:'傅鈺珊' },
+    { code:'31108', name:'信義統一店', manager:'傅鈺珊' },
+    { code:'31109', name:'DREAME信義統一店', manager:'陳思齊' },
+    { code:'31102', name:'新莊宏匯店', manager:'李孟哲' },
+  ]},
+  '門市二課': { code:'3120', leader:'陳長聖', stores:[
+    { code:'31201', name:'台中港三井店', manager:'陳長聖' },
+    { code:'31202', name:'台南三井店', manager:'葉于妙' },
+    { code:'31204', name:'林口三井店', manager:'張郁敏' },
+    { code:'31205', name:'台南南紡店', manager:'陳長聖' },
+    { code:'31206', name:'桃園台茂店', manager:'張郁敏' },
+  ]},
+  '門市三課': { code:'3130', leader:'林佳穎', stores:[
+    { code:'31104', name:'中和環球店', manager:'王筱崴' },
+    { code:'31105', name:'台中Lalaport店', manager:'林佳穎' },
+    { code:'31107', name:'新店誠品店', manager:'王筱崴' },
+    { code:'31301', name:'南港Lalaport店', manager:'林佳穎' },
+    { code:'31302', name:'BALMUDA南港Lalaport店', manager:'林佳穎' },
+  ]},
+};
+const CLASS_OPTIONS = ['門市一課','門市二課','門市三課'];
+
+// 店務測驗題庫種子資料（首次啟用時匯入，之後可在「完整題庫」編輯，不會被此常數覆蓋）
+const SEED_STORE_QUESTIONS = {"普通":[{"id":"普通_1","type":"choice","category":"食材報廢管理","question":"當食材出現下列哪種狀況時不需要填寫報廢？","options":["超過包裝上標示的保存期限","顧客加入會員以優惠價購買餐點","食材產生腐敗、變質、發霉","測試用、教學用食材"],"correctIndex":1},{"id":"普通_2","type":"choice","category":"食材報廢管理","question":"當必須報廢食材時，如無法量測重量、水量等單位計算，報廢食材單位以什麼單位為優先","options":["天數","人數","份數","公因數"],"correctIndex":2},{"id":"普通_3","type":"choice","category":"DOA作業流程","question":"DOA固定處理日是哪一天？","options":["每一天","禮拜二、禮拜四","禮拜天","每月最後一個禮拜六"],"correctIndex":2},{"id":"普通_4","type":"choice","category":"DOA作業流程","question":"顧客向門市反應DOA，依照Beutii品牌對外溝通的購買須知，需要在幾天以內可受理？","options":["15天，不含例假日","15天，包含例假日","7天，不含例假日","7天，包含例假日"],"correctIndex":1},{"id":"普通_5","type":"choice","category":"DOA作業流程","question":"使用ERP系統登打DOA，需要先將使用者登入作業先切換何種倉別後再開始建立單據？","options":["9901 樹林DOA暫出虛擬倉","不用轉換就可以建單","9980 樹林管理倉","9902 樹林DOA待送暫存倉"],"correctIndex":3},{"id":"普通_6","type":"choice","category":"DOA作業流程","question":"以下哪一項不是回報PM DOA所需提供的資料？","options":["購買日期","異常原因(提供照片、影片)","商品型號","保固卡序號"],"correctIndex":3},{"id":"普通_7","type":"choice","category":"業務工作執掌","question":"以下何者屬於業務工作執掌？","options":["達成業績目標","清潔櫃位外走道","送顧客到百貨門口","收集顧客不要的點數"],"correctIndex":0},{"id":"普通_8","type":"choice","category":"業務工作執掌","question":"以下何者不屬於業務工作執掌？","options":["清潔展示櫃、展品、店內地面","為顧客收款結帳、包裝商品","人力安排及規劃","進貨核對商品數量，依規定將商品歸入正確位置"],"correctIndex":2},{"id":"普通_9","type":"choice","category":"鼎新POS機各項功能","question":"「折價」與「折扣」功能差異在哪裡？ *這題很難。","options":["折價是直接重新修改金額，折扣是針對現有金額做打折","折價是對金額數字做減項，折扣是對金額百分比做扣除","折扣是直接重新修改金額，折價是針對現有金額做打折","折扣是對金額數字做減項，折價是對金額百分比做扣除"],"correctIndex":1},{"id":"普通_10","type":"choice","category":"鼎新POS機各項功能","question":"如果客人購買的商品需要宅配，需要點選哪一個功能？","options":["預購變更","預購沖銷","指定寄送","指定配送"],"correctIndex":3},{"id":"普通_11","type":"choice","category":"品牌願景與經營理念","question":"以下何謂Beutii的品牌願景？","options":["成為對女性最有影響力的家電通路品牌","成為對女性最有說服力的家電設計品牌","成為對女性最有創造力的家電代理品牌","成為對女性最有吸引力的家電購物平台"],"correctIndex":0},{"id":"普通_12","type":"choice","category":"品牌願景與經營理念","question":"以下何者是公司的核心價值？","options":["合法、分享、誠信、做第一","合理、分工、誠實、得第一","合規、分享、成功、拿第一","合適、分潤、成就、衝第一"],"correctIndex":0},{"id":"普通_13","type":"choice","category":"門市開閉店流程","question":"以下何者不是閉店流程之一？","options":["清點零用金","設定電視牆自動關機時間","確認調撥單及轉播單是否遺漏未核單","確認鼎新POS與百貨POS無帳差後清機並交帳"],"correctIndex":1},{"id":"普通_14","type":"choice","category":"門市休息時間規範","question":"依勞基法規定，繼續工作4小時，至少應有30分鐘之休息，如上全天班則會有多少休息時間？","options":["30分鐘","60分鐘","90分鐘","100分鐘"],"correctIndex":1},{"id":"普通_15","type":"choice","category":"門市休息時間規範","question":"多人值班狀況，如要離櫃買飯、抽煙、上廁所需要優先告知誰並取得同意","options":["不需取得同意","樓面主管","直屬主管","現場最高主管"],"correctIndex":3},{"id":"普通_16","type":"choice","category":"日常進貨及庫存整理","question":"以下進貨流程何者正確","options":["如果遇到包裝損壞，直接轉福利品料號出售","歸倉到有空位的地方，不需特別分類","核對進貨單上品項、數量、包裝是否完好並注記清點日期與清點人","客訂商品，直接歸倉即可不需通知客人"],"correctIndex":2},{"id":"普通_17","type":"choice","category":"日常進貨及庫存整理","question":"如進貨遇到運送外箱無破損，但產品有盒損或內部不完整的情況，處理流程依以下選項順序處理，請選出以下流程何者有誤？","options":["拍攝及回報狀況給該店主管","由清點人告知倉儲主管商品狀況","向上回報至區店長、總店長","倉儲主管確認出貨環節是否異常後回覆處理方式"],"correctIndex":1},{"id":"普通_18","type":"choice","category":"BRITA顯示器更換流程","question":"顧客如前往門市更換顯示器，以下步驟何者有誤","options":["確認濾水壺款式","填寫原廠顯示器更換資料表，須完整填寫所有欄位","將舊顯示器丟棄","提供新顯示器，並現場協助客戶按 Start 鍵進行測試"],"correctIndex":2},{"id":"普通_19","type":"choice","category":"BRITA顯示器更換流程","question":"顧客如前往門市更換顯示器，但不願填寫資料表時如何協助處理？","options":["引導顧客至BRITA官網登記更換","引導顧客至其他銷售點更換","引導顧客至BRITA總公司更換","避免客訴，一樣更換給顧客"],"correctIndex":0},{"id":"普通_20","type":"choice","category":"會員招募","question":"以下何者不是成為Beutii會員的權益之一？","options":["消費可累積點點金","參與會員日點數加倍贈送活動","點數折抵無上限","可參加Beutii舉辦的鋪底活動"],"correctIndex":2},{"id":"普通_21","type":"choice","category":"會員招募","question":"如顧客因個人因素不願或無法加入會員，你會？","options":["正常協助顧客結帳","將該筆交易點數集到自己的會員","回報給公司處理","請客人改日再結帳"],"correctIndex":0},{"id":"普通_22","type":"choice","category":"RMA客修作業","question":"以下何者不符合RMA的處理要件？","options":["客戶購買十五日內，產生非人為商品異常","客戶購買十五日內，產生人為商品異常","商品保固期內，商品故障異常","商品保固期外，商品故障異常"],"correctIndex":0},{"id":"普通_23","type":"choice","category":"RMA客修作業","question":"客修商品條款以下何者錯誤？","options":["維修時間約25-30個工作天","受理維修後，需當日送回樹林倉","如商品過保，或顧客無法提出保固證明則需酌收150元代送費用","僅受理Beutii通路出售的商品"],"correctIndex":1},{"id":"普通_24","type":"choice","category":"門市間調撥流程","question":"調撥相關流程何者錯誤？","options":["確認要調的商品剩餘庫存","取得該店幹部同意後才可調撥","進入ERP登打調撥需求單","在調撥社群僅貼上訂單照片無需說明請調撥門市協助出貨"],"correctIndex":3},{"id":"普通_25","type":"choice","category":"退回總部調撥單","question":"以下何種不是使用退回總部調撥單的狀況？","options":["活動結束後的贈品","滯銷的商品為避免佔用門市空間退回","總倉建立需求單調回、PM指示調回","瑕疵商品退回總倉"],"correctIndex":3},{"id":"普通_26","type":"choice","category":"退回總部調撥單","question":"門市要登打總部調撥單時，下列哪項資訊最不應該漏填？","options":["店員今日心情","退回原因與品項/數量","門市今日來客數","當月行銷活動名稱"],"correctIndex":1},{"id":"普通_27","type":"choice","category":"指配送流程_門市","question":"預 購接單的情境，下列何者錯誤？","options":["當下顧客要購買的商品沒有存貨","消費滿千，顧客要求宅配","購買的商品需要由原廠直出到顧客家中","顧客家中仍在裝潢， 配送日期可在 180 天內保留"],"correctIndex":3},{"id":"普通_28","type":"choice","category":"會員招募","question":"以下關於Beutii會員優惠券的敘述，何者有誤？","options":["生日禮抵用券300元，購物金額滿2,000可使用","LINE綁定會員抵用券100元，購物金額滿1,000可使用","會員資料填寫完成開卡禮抵用券100元，購物金額滿1,000可使用","藍鑽卡會員生日當月會贈送生日禮抵用券300元2張"],"correctIndex":2},{"id":"普通_29","type":"choice","category":"品牌縮寫","question":"下列品牌縮寫，何者正確？","options":["SIROCA(SA)","TESCOM(TC)","源源(UN)","BALMUDA(BL)"],"correctIndex":1},{"id":"普通_30","type":"choice","category":"鼎新POS機各項功能","question":"交易取消與立即更正兩種功能差異在哪裡？ 普通題庫","options":["交易取消使用在預購交易上，立即更正使用在一般交易上","立即更正可將未完成交易直接重置到未開始的狀態，交易取消可針對單一品項做刪除","交易取消可將未完成交易直接重置到未開始的狀態，立即更正可針對單一品項做刪除","沒有差異"],"correctIndex":2},{"id":"普通_31","type":"choice","category":"會員制度與權益","question":"下列哪種說法可能會造成客訴風險？","options":["加入會員可累積消費，1點可折抵一元，折抵無上限","折價券可找零","點數有效效期皆為一年，過期點數將歸零","以上皆是"],"correctIndex":3},{"id":"普通_32","type":"choice","category":"TESCOM安心特約","question":"以下何種條件不符合TESCOM安心特約免費換新條件？","options":["台灣原廠公司貨非國外販售幾種","機器溫度有異常，外觀無損傷","無法開機，機身凹陷","屬於Beutii常態販售型號"],"correctIndex":2},{"id":"普通_33","type":"choice","category":"TESCOM安心特約","question":"以下何種不屬於TESCOM安心特約半價換新描述？","options":["產品保固內可半價換新","半價換新保固可重新計算","半價基準為當日官網售價除以2","產品不小心摔壞"],"correctIndex":0},{"id":"普通_34","type":"choice","category":"門市零用金規範","question":"零用金使用限制何者有誤？","options":["限當月產生費用","統編發票如無法當月取得，可延至下月繳交","使用用途需經過門市店長同意","僅限發票金額3,000元以下使用"],"correctIndex":1},{"id":"普通_35","type":"choice","category":"門市零用金規範","question":"以下何者不是零用金的使用用途","options":["購買文具用品","購買每日午餐","購買食材","購買清潔用品、耗材"],"correctIndex":1},{"id":"普通_36","type":"choice","category":"指配送流程","question":"何種狀況下會產生指配送","options":["門市缺貨需要從總倉叫貨","顧客購買的產品缺貨，要求在其他門市自取","顧客要購買的產品需由總倉或原廠寄送給顧客","與其他門市調貨時要打指配送"],"correctIndex":2},{"id":"普通_37","type":"choice","category":"指配送流程","question":"結帳過後，因顧客改變心意不宅配商品，或是改由與其他門市調撥出貨時，已打好的指配送單要如何處理","options":["在指定配送單的聯繫人欄位改為「已結案」，且不需修改商品數量、不需核單","在備註欄位加註「已結案」，並把商品數量改 0","先核單再請總部協助結案","把運送地址第 2 欄改成「取消指配送」即可"],"correctIndex":0},{"id":"普通_38","type":"choice","category":"指配送流程","question":"關於「指送」完成沖銷結案的流程敘述正確的是哪一個？","options":["收到信件 → 轉撥單調入 → 核對寄送資訊 → 沖銷","收到信件 → 核對寄送資訊 → 沖銷","核單 → 收到信件 → 沖銷","收到信件 → 通知主管 → 沖銷"],"correctIndex":1},{"id":"普通_39","type":"choice","category":"指配送流程","question":"ERP 指配送資料輸入作業（POSI17）中，符合延後配送資格的訂單，如顧客配送日期尚未確定，應該要怎麼做？","options":["先隨便填一個日期，之後再改","與客戶協調並確認具體日期後填入，方可完成核單","交由倉庫窗口決定日期","不用填日期也能核單"],"correctIndex":1},{"id":"普通_40","type":"choice","category":"指配送流程","question":"登打指配送時如顧客未指定到貨日期，預計送貨日需要如何填寫","options":["D+10工作天","D+7工作天","D+3工作天","D+5工作天"],"correctIndex":2},{"id":"普通_41","type":"choice","category":"大型家電配送","question":"如顧客購買掃地機器人要延後配送條件為何？","options":["消費金額需達15,000元，最多可保留90天內配送","不需達消費金額門檻，最多可保留60天內配送","消費金額需達1,000元，最多可保留90天內配送","消費金額需達15,000元，最多可保留60天內配送"],"correctIndex":0},{"id":"普通_42","type":"choice","category":"會員制度與權益","question":"藍卡會員的「等級效期」是多久？","options":["180天","365天","730天","永久"],"correctIndex":3},{"id":"普通_43","type":"choice","category":"會員制度與權益","question":"藍金卡與藍鑽卡會員的「等級效期」是多久？","options":["180天","365天","730天","永久"],"correctIndex":1},{"id":"普通_44","type":"choice","category":"會員制度與權益","question":"點點金可使用的範圍包含哪些？","options":["只能在Beutii官網使用","只能在全台Beutii門市","Beutii官網與全台門市皆可使用","Beutii蝦皮旗艦館"],"correctIndex":2},{"id":"普通_45","type":"choice","category":"會員制度與權益","question":"如在每月 10 號會員日購買掃地機器人，將會額外回饋多少點點金？","options":["額外加碼 3%","額外加碼 5%","額外加碼 10%","低毛利商品不加碼"],"correctIndex":0},{"id":"普通_46","type":"choice","category":"會員制度與權益","question":"點點金折抵金額的上限規則是？","options":["以最終付款金額的 10% 為限","以最終付款金額的 20% 為限","以最終付款金額的 30% 為限","可全額折抵100%"],"correctIndex":2},{"id":"普通_47","type":"choice","category":"會員制度與權益","question":"關於Beutii會員的生日禮的敘述何者正確？","options":["藍卡會員也有生日禮","藍金卡生日月 1 號獲得 1 張 NT$300 優惠券；藍鑽卡獲得 2 張 NT$300 優惠券","生日禮無使用門檻且效期 365 天","生日禮只在每月 10 號發送"],"correctIndex":1},{"id":"普通_48","type":"choice","category":"預購時點明細表","question":"每週管理部會發信寄送預購時點明細表的日期是","options":["每週二","每週五","每日工作天","每週一"],"correctIndex":0},{"id":"普通_49","type":"choice","category":"預購時點明細表","question":"門市要回覆表單時，流程規定主要針對哪一類欄位回覆？","options":["所有欄位都必須回覆","只有「已完成」欄位","有異常狀況／未沖銷欄位標示為 Y 的部分","只有最新日期的所有訂單"],"correctIndex":2},{"id":"普通_50","type":"choice","category":"品號編碼規則","question":"品號分類中，福利品等級代碼是哪一組?","options":["DML0~5","SP","NGA、B、C","EXP"],"correctIndex":2},{"id":"普通_51","type":"choice","category":"品號編碼規則","question":"「品號類別縮寫」表中，EL 類別名稱是？","options":["一般家電","生活用品","清掃家電","美妝家電"],"correctIndex":0},{"id":"普通_52","type":"choice","category":"品號編碼規則","question":"「一般產品：正常品」的品號規則，會使用哪種字元格式？","options":["小寫全形英文字＋符號","大寫半形英文字、數字組成","中文＋數字組成","只允許數字不可有英文"],"correctIndex":1},{"id":"普通_53","type":"choice","category":"品號編碼規則","question":"品牌的縮寫編碼為幾碼？","options":["1碼","2碼","3碼","視品牌而定"],"correctIndex":1},{"id":"普通_54","type":"choice","category":"品號編碼規則","question":"展示品的代碼結尾固定包含哪三個字母加數字？","options":["NGA","COS","DML","EXP"],"correctIndex":2},{"id":"普通_55","type":"choice","category":"品號編碼規則","question":"品號結尾有EXP代碼的品項代表什麼意思","options":["效期品","即期品","特價品","福利品"],"correctIndex":0},{"id":"普通_56","type":"choice","category":"品號編碼規則","question":"配件週邊品號規則中，所有規則最前面要先加上哪兩碼？","options":["AB","OT","SP","NG"],"correctIndex":1},{"id":"普通_57","type":"choice","category":"大型家電配送流程","question":"商品尚未出貨，若要提醒顧客欲更改配送日，需要請客人注意的事項為何？","options":["務必於原配送日14天前聯繫告知","需要取消訂單，重新再下單","請顧客自行聯繫物流即可","使用Mail告知"],"correctIndex":0},{"id":"普通_58","type":"choice","category":"各品牌保固說明","question":"以下哪些選項，報修需由顧客自行聯繫原廠到府收送","options":["SIROCA、YAMAZEN","KAMOME、DOSHISHA","TESCOM、BALMUDA","DREAME、ECOVACS"],"correctIndex":3},{"id":"普通_59","type":"choice","category":"各品牌保固說明","question":"以下哪些品牌選項，可請客人逕自至全台燦坤門市送修","options":["422、ACERPURE","LISSCODE、AMADANA","TESCOM、BALMUDA","PORCLEAN、KAMOME"],"correctIndex":2},{"id":"普通_60","type":"choice","category":"TESCOM安心特約","question":"如顧客於海外購買TESCOM吹風機，受理安心特約的條件為何","options":["無法受理","提報PM經同意即可受理","聯繫原廠客服，經同意即可受理","可直接受理"],"correctIndex":0}],"困難":[{"id":"困難_61","type":"choice","category":"受訂單交易流程","question":"如有受訂單交易，顧客匯款至公司帳戶後，財務部將於每日幾點回覆對帳結果？","options":["16:00前","17:00前","18:00前","辦公室下班前"],"correctIndex":0},{"id":"困難_62","type":"choice","category":"受訂單交易流程","question":"以下受訂單交易階段，何者步驟與流程相符？","options":["寄送匯款資訊→確認交易細節→客戶匯款後登記收款資訊表單→財務部對帳完畢→填寫受訂單寄送至業務支援部、該店幹部→出貨完成，助理回覆相關單號，並完成銷貨。","確認交易細節→寄送匯款資訊→客戶匯款後登記收款資訊表單→財務部對帳完畢→填寫受訂單寄送至業務支援部、該店幹部→出貨完成，助理回覆相關單號，並完成銷貨。","確認交易細節→寄送匯款資訊→客戶匯款後登記收款資訊表單→財務部對帳完畢→發信請總倉出貨給顧客→出貨完成，助理回覆相關單號，並完成銷貨。","寄送匯款資訊→確認交易細節→客戶匯款後登記收款資訊表單→財務部對帳完畢→發信請總倉出貨給顧客→出貨完成，助理回覆相關單號，並完成銷貨。"],"correctIndex":1},{"id":"困難_63","type":"choice","category":"受訂單交易流程","question":"填受訂單時，如顧客需要統一編號，發票類型要選哪個？","options":["電子-二聯","電子-三聯","一般發票-二聯","百貨發票-三聯"],"correctIndex":1},{"id":"困難_64","type":"choice","category":"門市展示機管理","question":"拆展展示品時，配件及保卡的處理方式是？","options":["一律隨箱回倉","可贈送給顧客","於門市妥善保管收納","直接就地丟棄"],"correctIndex":2},{"id":"困難_65","type":"choice","category":"門市展示機管理","question":"門市自行拆展：拆展前要先向 PM 確認什麼？","options":["是否可拆展，並詢問 DML 料號","是否可寄回總倉，並詢問運費","是否可折扣銷售，並詢問折數","是否可報廢"],"correctIndex":0},{"id":"困難_66","type":"choice","category":"門市展示機管理","question":"DML1、DML2品號的展示品，空箱需如何處置？","options":["隨意處置","不論成本為何，直接丟棄","成本低於6,000以下，就地丟棄","登記回倉紀錄後，寄回總倉存放"],"correctIndex":3},{"id":"困難_67","type":"choice","category":"門市盤點作業流程","question":"盤點時若遇到庫存異常不知道如何處理，正確作法是？","options":["自行作帳調整庫存，之後再補單","直接忽略，下次盤點再修正","立刻請示主管","在群組交接即可"],"correctIndex":2},{"id":"困難_68","type":"choice","category":"門市盤點作業流程","question":"盤點前檢視預購單時，流程強調務必做哪件事？","options":["先把預購單全部取消","將已取商品進行沖銷","把預購單列印出來簽名","把預購單轉成受訂單"],"correctIndex":1},{"id":"困難_69","type":"choice","category":"門市盤點作業流程","question":"盤點步驟最關鍵原則是？","options":["先看盤點表找品項再去找貨","採分區盤點，依實際點到數量填寫","只盤高單價商品即可","一律由同一人完成全店盤點"],"correctIndex":1},{"id":"困難_70","type":"choice","category":"第一線客訴處理","question":"如遇銷售面客訴，需要最優先確認的資訊為何？","options":["品牌型號、購買日期、接洽業務","客訴訴求、回電時間","解決方案","權責範圍、回報流程"],"correctIndex":0},{"id":"困難_71","type":"choice","category":"第一線客訴處理","question":"遇到電話客訴，當下仍有其他資訊需確認時，務必做到哪一點？","options":["請客人改天再客訴","直接請客人聯繫總部","承諾回電時間","當場先提出補償方案"],"correctIndex":2},{"id":"困難_72","type":"choice","category":"展示空箱管理辦法","question":"展示空箱就地丟棄符合的條件為何？","options":["DML3~5品號，成本價值超過6,000元","DML1~2品號，成本價值超過6,000元","DML3~5品號，成本價值低於6,000元","DML1~2品號，成本價值低於6,000元"],"correctIndex":2},{"id":"困難_73","type":"choice","category":"價格牌管理作業規範","question":"常態價格牌的製作週期是？","options":["有新增品牌或商品才製作","每週由負責人製作一次","每月月初由店長負責人統一製作完成","每季由管理部統一製作"],"correctIndex":0},{"id":"困難_74","type":"choice","category":"價格牌管理作業規範","question":"低毛利商品海報的執行流程中，負責人完成後由誰依百貨檔期、價格等調整金額再自行列印？","options":["各門市幹部/業務","各門市店長","PM","管理部"],"correctIndex":1},{"id":"困難_75","type":"choice","category":"價格牌管理作業規範","question":"曝光規範中，如當月品項沒有短促價格，但門市想曝光非常態價格，必須先做什麼？","options":["直接在價格牌上手改","先提報「單店活動」並獲准","只要通知行銷部即可","只要店長口頭同意即可"],"correctIndex":1},{"id":"困難_76","type":"choice","category":"門市盤點作業流程","question":"盤點流程規定「兩人交叉覆核」，其目的最主要是：","options":["增加工作量","讓盤點變慢","讓資深同仁有存在感","降低單人錯誤可能，提升結果可信度"],"correctIndex":3},{"id":"困難_77","type":"choice","category":"第一線客訴處理","question":"下列哪個行為最容易讓客訴升級？","options":["先同理並重述問題","未釐清事實就判斷責任、或與顧客爭辯對錯","告知下一步與回覆時點","記錄重點資訊"],"correctIndex":1}],"最終正職考試":[{"id":"最終正職考試_78","type":"short","category":"DOA作業流程","question":"請簡短說明DOA產生的原因是什麼？(時間+原因)","referenceAnswer":"到貨後的起15天內+產品主體本身瑕疵經檢測判定新品不良"},{"id":"最終正職考試_79","type":"short","category":"DOA作業流程","question":"詢問 PM DOA 處理方式時，必須提供的 4 項資料各是什麼？","referenceAnswer":"購買地點、購買日期、型號、異常原因照片或影片"},{"id":"最終正職考試_80","type":"short","category":"門市休息時間規範","question":"勞基法的休息規則是什麼（工作多久、至少休息多久）？","referenceAnswer":"連續工作4小時，至少應有30分鐘之休息"},{"id":"最終正職考試_81","type":"short","category":"門市休息時間規範","question":"請寫出「早晚班」「半天班」「全天班」的上班時數與休息時間各是多少？","referenceAnswer":"早晚班上班8小時，休息1小時。半天班上班5.5小時，休息30分鐘，全天班上班10.5小，休息1小時。"},{"id":"最終正職考試_82","type":"short","category":"門市休息時間規範","question":"外出購餐情況如由同仁代購、買同一家，代購同仁平日與假日「最多」可補點的時間各是多少？","referenceAnswer":"平日20分鐘，假日30分鐘。"},{"id":"最終正職考試_83","type":"short","category":"門市休息時間規範","question":"外出購餐情況如自行購買，休息時間從什麼時間點開始計算？","referenceAnswer":"自離店開始計算"},{"id":"最終正職考試_84","type":"short","category":"日常進貨及庫存整理","question":"日常進貨無誤時，進貨單上必須完成哪些註記？(請寫出 2 項)","referenceAnswer":"需在進貨單上註記 點收人 與 點收日期"},{"id":"最終正職考試_85","type":"short","category":"日常進貨及庫存整理","question":"原廠直出商品，清點完成後，由誰來登打「暫入單」？","referenceAnswer":"副店長"},{"id":"最終正職考試_86","type":"short","category":"日常進貨及庫存整理","question":"客訂商品到貨後留貨的標準處理流程是什麼？請寫出步驟。","referenceAnswer":"填寫客訂單→貼上商品保留於客訂區→訂單本記錄已留貨→通知顧客取貨"},{"id":"最終正職考試_87","type":"short","category":"會員招募","question":"請寫出10 號會員日點數額外回饋最高幾%？指定商品(低毛商品)幾%？","referenceAnswer":"5%，指定商品3%"},{"id":"最終正職考試_88","type":"short","category":"會員招募","question":"請寫出Beutii會員所有會員等級的回饋點數各別為幾%？","referenceAnswer":"藍卡1%、藍金卡3%、藍鑽卡5%"},{"id":"最終正職考試_89","type":"short","category":"會員招募","question":"請寫出新會員開卡禮、LINE好友禮100元獲得的方法","referenceAnswer":"加入LINE好友並綁定電話、填寫官網完整所有會員資訊"},{"id":"最終正職考試_90","type":"short","category":"會員招募","question":"關於會員點數公司規定絕對禁止規範為何？","referenceAnswer":"嚴禁私自累積顧客消費到個人 Beutii 會員或其他可自行操作帳號；違者開除並追究法律責任；且百貨點數亦同。"},{"id":"最終正職考試_91","type":"short","category":"品牌願景與經營理念","question":"請完整寫出Beutii的品牌願景","referenceAnswer":"成為對女性最有影響力的家電通路品牌"},{"id":"最終正職考試_92","type":"short","category":"RMA客修作業","question":"產品保固內及保固外至Beutii送修會有什麼差別","referenceAnswer":"保固內免費代送、保固外酌收150元代送費"},{"id":"最終正職考試_93","type":"short","category":"退回總部調撥單","question":"在「代平台出貨」情境下，門市每日需在什麼時間點前完成回填單號？並依物流狀況最晚何時寄出？  *改成代出貨流程","referenceAnswer":"門市於平日工作天 15:30 前確認需求；依物流狀況於當日或隔日寄回。"},{"id":"最終正職考試_94","type":"short","category":"門市調撥單","question":"調撥流程中，要用「確認碼」篩選出哪一種狀態確認是否有其他門市調撥需求待處理","referenceAnswer":"Ｎ:未確認"},{"id":"最終正職考試_95","type":"short","category":"退回總部調撥單","question":"請說明門市退倉如何在ERP操作？","referenceAnswer":"專櫃人員登入作業切換到9990樹林倉→建立新的退回總部調撥單→登打退回商品及數量、退回原因→備注輸入宅配單號→工具列選項中按下列印單據→專櫃人員登入作業切換回所屬門市後按下核單→將單據與商品一同檢附回倉。"},{"id":"最終正職考試_96","type":"short","category":"門市間調撥流程","question":"什麼情況下會產生「調入單」(請寫出系統面的答案)？調入單的在系統核可入帳時機是什麼？","referenceAnswer":"被調撥門市在系統按下核可後，會產生調入單。  當產品寄出給客人或門市收到貨品後，需核可調入單入帳。"},{"id":"最終正職考試_97","type":"short","category":"門市零用金規範","question":"零用金請款可受理的發票日期區間為每個月的什麼時候","referenceAnswer":"期間為每月 1 號到月底最後一天"},{"id":"最終正職考試_98","type":"short","category":"指配送流程","question":"請寫出指送、及配送的區別","referenceAnswer":"指送的出貨端為原廠、配送的出貨單為樹林總倉"},{"id":"最終正職考試_99","type":"short","category":"指配送流程","question":"在ERP填寫指配送的預計送貨日欄位的填寫規則是什麼？","referenceAnswer":"D+3個工作天"},{"id":"最終正職考試_100","type":"short","category":"指配送流程","question":"如顧客有明確指定送達日期，在ERP填寫指配送時，要在哪一個欄位明確填寫備注以及日期?","referenceAnswer":"運送地址第二欄"},{"id":"最終正職考試_101","type":"short","category":"預購時點明細表填寫","question":"每週一門市需要針對時點明細表的哪個部分填寫？","referenceAnswer":"僅針對有異常狀況 / 未沖銷欄位有標示為 Y 的部分回應，回覆於 門市異常回覆 欄位"},{"id":"最終正職考試_102","type":"short","category":"門市展示機管理","question":"門市自行拆展前，必須先向 PM 確認哪些事項？（至少 2 項）","referenceAnswer":"是否可拆展、待轉的DML料號"},{"id":"最終正職考試_103","type":"short","category":"門市展示機管理","question":"展示品空箱「判斷回倉條件」請完整至少2點。","referenceAnswer":"原廠提供之樣機料號為 DML1、DML2、電視冰箱洗衣機、成本 6000 元以上、後補樣機"},{"id":"最終正職考試_104","type":"short","category":"門市展示機管理","question":"門市自行拆展後，若已經有相符 DML 料號，需要做哪兩件事？","referenceAnswer":"請副店長將展品轉至相符 DML 料號、更新雲端展示品明細"}]};
+const STORE_STAGE_ORDER = ['普通','困難','最終正職考試'];
+const STORE_DRAW_COUNT = 10;       // 每次產生考題，從店務題庫抽題數
+const STORE_POINTS_PER_Q = 5;      // 店務每題配分
+const PRODUCT_MAX_POINTS = 50;     // 商品部分滿分（商品題庫尚未建置，先由驗收人手動輸入商品得分）
+const EXAM_PASS_SCORE = 85;        // 及格標準（滿分100）
+// 各階段「正式」驗收次數上限（不含補考）；最終正職考試僅一次應試機會，如需調整請告知
+const STAGE_EXAM_LIMITS = { '普通': 2, '困難': 2, '最終正職考試': 1 };
+
+function colsOf(cat){ return CATEGORY_COLUMNS[cat] || CATEGORY_COLUMNS.DEFAULT; }
+
+/* ===================== 狀態 ===================== */
+let session = null;
+let currentTab = 'training';
+let selectedEmployeeId = null;
+let empListFilter = 'ongoing'; // 'ongoing' | 'completed'
+let accounts = [];
+let employees = [];              // { id, name, empCode, empClass, onboardDate, onboardStore }
+let trainingData = {};           // { [employeeId]: { onboarding:[...], categories:{cat:[...]} } }
+let orgStructure = null;    // { '門市一課': { code, leader, stores:[{code,name,manager}] }, ... }
+let storeQuestionBank = null;        // { '普通':[...], '困難':[...], '最終正職考試':[...] }
+let storeExamRecordsCache = {};      // { [employeeId]: [examRecord, ...] }
+let storeSubView = 'bank';           // 'bank' | 'exam'
+let bankStageView = '普通';
+let examGenEmployeeId = '';
+let examGenStage = '普通';
+let lastGeneratedExam = null;        // 最近一次產生、尚未離開畫面的考卷（供列印使用）
+
+const DEFAULT_ADMIN = { username:'admin', password:'beutii2026', role:'admin', name:'系統管理者' };
+
+/* ===================== 小工具 ===================== */
+function uid(prefix){ return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+async function storageGet(key, shared){
+  if(!shared){
+    // 非共用資料（例如「記住我」的登入資訊）：只存在使用者自己的瀏覽器
+    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+    catch(e){ return null; }
+  }
+  try{
+    const snap = await db.collection(FIRESTORE_COLLECTION).doc(key).get();
+    return snap.exists ? snap.data().v : null;
+  }catch(e){ console.error('storage get failed', key, e); return null; }
+}
+async function storageSet(key, value, shared){
+  if(!shared){
+    try{
+      if(value === null || value === undefined) localStorage.removeItem(key);
+      else localStorage.setItem(key, JSON.stringify(value));
+    }catch(e){ /* ignore */ }
+    return;
+  }
+  try{
+    if(value === null || value === undefined){
+      await db.collection(FIRESTORE_COLLECTION).doc(key).delete();
+    } else {
+      await db.collection(FIRESTORE_COLLECTION).doc(key).set({ v: value });
+    }
+  }catch(e){ console.error('storage set failed', key, e); showToast('雲端儲存失敗，請確認網路連線'); }
+}
+function escapeHtml(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, s => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[s]));
+}
+function isAdmin(){ return session && session.role === 'admin'; }
+function dotClassForStatus(status){
+  if(status === '合格') return 'dot-green';
+  if(status === '不合格') return 'dot-red';
+  return 'dot-grey'; // 待驗收 = 未啟動
+}
+function dotClassForOnboard(completeDate){ return completeDate ? 'dot-green' : 'dot-grey'; }
+
+function blankTrainingData(){
+  return {
+    onboarding: ONBOARDING_ITEMS.map(t => ({ item:t.item, completeDate:'', note: t.note || '', isCustom:false })),
+    categories: CATEGORY_ORDER.reduce((acc, cat) => {
+      acc[cat] = TRAINING_CATEGORIES[cat].map(t => ({
+        item:t.item, guide:'', trainDate: t.trainDate || '', checker:'', checkDate:'', status:'待驗收', isCustom:false
+      }));
+      return acc;
+    }, {})
+  };
+}
+// 向下相容：若讀到舊格式資料（缺 item / isCustom 欄位），依模板索引補齊
+function hydrateTrainingData(data){
+  if(!data) return blankTrainingData();
+  data.onboarding = (data.onboarding || []).map((row,i) => ({
+    item: row.item !== undefined ? row.item : (ONBOARDING_ITEMS[i] ? ONBOARDING_ITEMS[i].item : ('自訂項目')),
+    completeDate: row.completeDate || '',
+    note: row.note || '',
+    isCustom: row.isCustom === true || row.item === undefined ? (row.isCustom === true) : false,
+  }));
+  data.categories = data.categories || {};
+  CATEGORY_ORDER.forEach(cat => {
+    const tmpl = TRAINING_CATEGORIES[cat];
+    data.categories[cat] = (data.categories[cat] || []).map((row,i) => ({
+      item: row.item !== undefined ? row.item : (tmpl[i] ? tmpl[i].item : '自訂項目'),
+      guide: row.guide || '',
+      trainDate: row.trainDate || '',
+      checker: row.checker || '',
+      checkDate: row.checkDate || '',
+      status: row.status || '待驗收',
+      isCustom: row.isCustom === true,
+    }));
+  });
+  return data;
+}
+
+/* ===================== 初始化 ===================== */
+async function init(){
+  accounts = await storageGet('accounts', true);
+  if(!accounts || !accounts.length){
+    accounts = [DEFAULT_ADMIN];
+    await storageSet('accounts', accounts, true);
+  } else if(!accounts.some(a=>a.username==='admin')){
+    accounts.push(DEFAULT_ADMIN);
+    await storageSet('accounts', accounts, true);
+  }
+
+  employees = await storageGet('employees', true) || [];
+
+  orgStructure = await storageGet('org-structure', true);
+  if(!orgStructure){
+    orgStructure = JSON.parse(JSON.stringify(SEED_ORG_STRUCTURE));
+    await storageSet('org-structure', orgStructure, true);
+  }
+
+  storeQuestionBank = await storageGet('store-question-bank', true);
+  if(!storeQuestionBank){
+    storeQuestionBank = JSON.parse(JSON.stringify(SEED_STORE_QUESTIONS));
+    await storageSet('store-question-bank', storeQuestionBank, true);
+  }
+
+  const remembered = await storageGet('remembered-login', false);
+  if(remembered){
+    document.getElementById('loginUser').value = remembered.username || '';
+    document.getElementById('loginPass').value = remembered.password || '';
+    document.getElementById('rememberMe').checked = true;
+  }
+}
+init();
+
+/* ===================== 登入／登出 ===================== */
+async function handleLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const remember = document.getElementById('rememberMe').checked;
+  const errBox = document.getElementById('loginError');
+
+  const found = accounts.find(a => a.username === u && a.password === p);
+  if(!found){
+    errBox.style.display = 'block';
+    return;
+  }
+  errBox.style.display = 'none';
+  session = { username: found.username, role: found.role, name: found.name || found.username };
+
+  await storageSet('remembered-login', remember ? { username:u, password:p } : null, false);
+
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('whoLabel').textContent = session.name;
+  document.getElementById('roleBadgeWrap').innerHTML =
+    `<span class="role-badge">${session.role === 'admin' ? '管理者' : '一般使用者'}</span>`;
+
+  switchTab('training');
+}
+
+function handleLogout(){
+  session = null;
+  selectedEmployeeId = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+/* ===================== 側邊欄／分頁 ===================== */
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  document.getElementById('toggleBtn').textContent = sb.classList.contains('collapsed') ? '›' : '‹';
+}
+
+function switchTab(tab){
+  currentTab = tab;
+  selectedEmployeeId = null;
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  render();
+}
+
+/* ===================== 渲染主內容 ===================== */
+async function render(){
+  const titles = {
+    training: ['員工訓練表', '點選員工即可查看該員工的教育訓練總表'],
+    product:  ['商品測驗', '商品知識測驗內容建置中'],
+    store:    ['店務測驗', '完整題庫維護與正式考題產生'],
+    rules:    ['規則', '新人訓練與考核制度說明'],
+    settings: ['設定', '組織架構：課別與所屬門市管理'],
+  };
+  document.getElementById('pageTitle').textContent = titles[currentTab][0];
+  document.getElementById('pageDesc').textContent = titles[currentTab][1];
+
+  if(currentTab === 'training'){
+    if(selectedEmployeeId && employees.some(e=>e.id===selectedEmployeeId)){
+      renderEmployeeDetail(selectedEmployeeId);
+    } else {
+      selectedEmployeeId = null;
+      await renderEmployeeList();
+    }
+  } else if(currentTab === 'rules'){
+    renderRules();
+  } else if(currentTab === 'store'){
+    await renderStoreTab();
+  } else if(currentTab === 'settings'){
+    renderSettings();
+  } else {
+    renderPlaceholder(titles[currentTab][0]);
+  }
+}
+
+/* ---- 員工列表 ---- */
+// 合格判定：以是否已填「驗收日期」為準；無驗收日期欄位的分類（規範）則以「訓練日期」是否已填為替代依據
+function progressOf(id){
+  const d = trainingData[id];
+  if(!d) return { done:0, total:0, pct:0 };
+  let done = 0, total = 0;
+  CATEGORY_ORDER.forEach(cat => {
+    const cols = colsOf(cat);
+    const useCheckDate = cols.includes('checkDate');
+    (d.categories[cat] || []).forEach(r => {
+      total++;
+      const filled = useCheckDate ? !!r.checkDate : !!r.trainDate;
+      if(filled) done++;
+    });
+  });
+  return { done, total, pct: total ? Math.round(done/total*100) : 0 };
+}
+
+async function renderEmployeeList(){
+  document.getElementById('pageDesc').textContent = '點選員工即可查看該員工的教育訓練總表';
+  document.getElementById('topbarActions').innerHTML = isAdmin()
+    ? `<button class="btn btn-gold" onclick="openEmpModal()">＋ 新增員工</button>` : '';
+
+  if(!employees.length){
+    document.getElementById('content').innerHTML = `
+      <div class="panel">
+        <div class="empty-state">
+          <div class="big">👤</div>
+          <h2>尚未建立任何員工</h2>
+          <p>${isAdmin() ? '點選右上角「新增員工」建立第一位員工的教育訓練總表。' : '請聯繫管理者新增員工資料。'}</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // 預先載入所有員工的訓練資料，以計算進度條
+  for(const e of employees){
+    if(!trainingData[e.id]){
+      trainingData[e.id] = hydrateTrainingData(await storageGet('training-data:' + e.id, true) || blankTrainingData());
+    }
+  }
+
+  const withProgress = employees.map(e => ({ e, p: progressOf(e.id) }));
+  const ongoing = withProgress.filter(x => x.p.total === 0 || x.p.pct < 100);
+  const completed = withProgress.filter(x => x.p.total > 0 && x.p.pct === 100);
+  const list = empListFilter === 'completed' ? completed : ongoing;
+
+  const tabsHtml = `
+    <div class="seg-tabs">
+      <button class="seg-tab ${empListFilter==='ongoing'?'active':''}" onclick="setEmpListFilter('ongoing')">進行中 (${ongoing.length})</button>
+      <button class="seg-tab ${empListFilter==='completed'?'active':''}" onclick="setEmpListFilter('completed')">已完成 (${completed.length})</button>
+    </div>`;
+
+  if(!list.length){
+    document.getElementById('content').innerHTML = tabsHtml + `
+      <div class="panel">
+        <div class="empty-state">
+          <div class="big">${empListFilter==='completed' ? '🎉' : '📋'}</div>
+          <h2>${empListFilter==='completed' ? '目前尚無已完成訓練的員工' : '目前沒有進行中的員工'}</h2>
+          <p>${empListFilter==='completed' ? '當員工所有訓練項目都已填驗收日期，會自動顯示於此。' : ''}</p>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const cards = list.map(({e,p}) => `
+    <div class="emp-card" onclick="openEmployee('${e.id}')">
+      ${isAdmin() ? `<span class="del-x" onclick="event.stopPropagation(); removeEmployee('${e.id}')" title="移除員工">✕</span>` : ''}
+      <div class="name">${escapeHtml(e.name)}</div>
+      <div class="meta">
+        工號：${escapeHtml(e.empCode||'—')}　課別：${escapeHtml(e.empClass||'—')}<br>
+        報到日：${escapeHtml(e.onboardDate||'—')}　報到門市：${escapeHtml(e.onboardStore||'—')}
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${p.pct}%"></div></div>
+      <div class="progress-label">已填驗收日期 ${p.done} / ${p.total}（${p.pct}%）</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('content').innerHTML = tabsHtml + `<div class="emp-grid">${cards}</div>`;
+}
+function setEmpListFilter(filter){
+  empListFilter = filter;
+  render();
+}
+
+async function openEmployee(id){
+  if(!trainingData[id]){
+    trainingData[id] = hydrateTrainingData(await storageGet('training-data:' + id, true) || blankTrainingData());
+  }
+  selectedEmployeeId = id;
+  render();
+}
+
+function backToList(){
+  selectedEmployeeId = null;
+  render();
+}
+
+/* ---- 員工詳細：教育訓練總表 ---- */
+function storeOptionsForClass(empClass, selected){
+  if(!empClass){
+    let opts = `<option value="">請先選擇課別</option>`;
+    if(selected) opts += `<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)}</option>`;
+    return opts;
+  }
+  const cls = orgStructure[empClass];
+  const names = cls ? cls.stores.map(s => s.name) : [];
+  let opts = `<option value="">請選擇</option>`;
+  const list = names.slice();
+  if(selected && !list.includes(selected)) list.unshift(selected); // 保留舊資料中已不在清單的門市
+  opts += list.map(s => `<option value="${escapeHtml(s)}" ${s===selected?'selected':''}>${escapeHtml(s)}</option>`).join('');
+  return opts;
+}
+
+async function renderEmployeeDetail(id){
+  const emp = employees.find(e=>e.id===id);
+  const data = trainingData[id];
+  const examRecords = await loadExamRecords(id);
+  document.getElementById('pageDesc').textContent = escapeHtml(emp.name) + ' 的教育訓練總表';
+  document.getElementById('topbarActions').innerHTML =
+    `<button class="btn btn-ghost" onclick="backToList()">← 返回員工列表</button>`;
+
+  const deadline = computeThreeMonthDeadline(emp.onboardDate);
+  const finalPassed = examRecords.some(r => r.stage === '最終正職考試' && r.status === '合格');
+  const isOverdue = deadline && !finalPassed && (new Date() > new Date(deadline + 'T23:59:59'));
+
+  let html = `
+    <div class="detail-header">
+      <div class="back-link" onclick="backToList()">← 返回員工列表</div>
+      <h2>門市業務部 教育訓練總表</h2>
+      <div class="hdr-grid">
+        <div class="hdr-field"><label>姓名</label><input type="text" value="${escapeHtml(emp.name)}" onchange="updateEmpField('${id}','name',this.value)"></div>
+        <div class="hdr-field"><label>工號</label><input type="text" value="${escapeHtml(emp.empCode||'')}" placeholder="請輸入工號" onchange="updateEmpField('${id}','empCode',this.value)"></div>
+        <div class="hdr-field">
+          <label>課別</label>
+          <select onchange="updateEmpField('${id}','empClass',this.value)">
+            <option value="" ${!emp.empClass?'selected':''}>請選擇</option>
+            ${CLASS_OPTIONS.map(c=>`<option value="${c}" ${c===emp.empClass?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="hdr-field"><label>報到日</label><input type="date" value="${emp.onboardDate||''}" onchange="updateEmpField('${id}','onboardDate',this.value)"></div>
+        <div class="hdr-field">
+          <label>報到門市</label>
+          <div class="hdr-field-row">
+            <select onchange="updateEmpField('${id}','onboardStore',this.value)">${storeOptionsForClass(emp.empClass, emp.onboardStore)}</select>
+          </div>
+        </div>
+        <div class="hdr-field">
+          <label>入職滿三個月日期</label>
+          <div class="hdr-readonly ${isOverdue?'overdue':''}">${deadline ? escapeHtml(deadline) : '—'}${isOverdue ? '　⚠ 已超過期限' : ''}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">測驗紀錄（店務測驗） <span class="tag">共 ${examRecords.length} 筆</span></div>
+      ${examRecords.length ? `
+        <table>
+          <thead><tr><th>階段</th><th>產生日期</th><th>店務得分</th><th>商品得分</th><th>總分</th><th>驗收人</th><th>狀態</th></tr></thead>
+          <tbody>
+            ${[...examRecords].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(r => `
+              <tr>
+                <td>${escapeHtml(r.stage)}${r.isRetake ? ' <span class="retake-tag">補考</span>' : ''}</td>
+                <td>${escapeHtml(r.createdAt)}</td>
+                <td>${r.storeScore!=null ? r.storeScore : '—'}</td>
+                <td>${r.productScore!=null ? r.productScore : '—'}</td>
+                <td>${r.totalScore!=null ? r.totalScore : '—'}</td>
+                <td>${escapeHtml(r.gradedBy||'—')}</td>
+                <td><span class="status-pill ${r.status==='合格'?'status-ok':r.status==='不合格'?'status-warn':'status-pending'}">${escapeHtml(r.status)}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <p style="font-size:12px; color:var(--ink-soft); margin-top:10px;">如需產生新考卷或輸入分數，請至「店務測驗」分頁的「正式考題」功能操作。</p>
+      ` : `<p style="font-size:13px; color:var(--ink-soft);">此員工尚無測驗紀錄，請至「店務測驗」分頁的「正式考題」功能產生考卷。</p>`}
+    </div>
+
+    <div class="panel">
+      <div class="section-title">報到流程 <span class="tag">共 ${data.onboarding.length} 項</span></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th style="width:34%;">報到流程</th><th style="width:16%;">完成日期</th><th>備註</th><th style="width:36px;"></th></tr></thead>
+          <tbody>
+            ${data.onboarding.map((row,i) => `
+              <tr>
+                <td>
+                  <span class="item-dot ${dotClassForOnboard(row.completeDate)}"></span>${
+                    row.isCustom
+                      ? `<input class="cell-input" style="display:inline-block; width:calc(100% - 16px);" value="${escapeHtml(row.item)}" placeholder="項目名稱" onchange="updateOnboardItemName('${id}',${i},this.value)">`
+                      : escapeHtml(row.item)
+                  }
+                </td>
+                <td><input type="date" class="cell-input" value="${row.completeDate||''}" onchange="updateOnboarding('${id}',${i},'completeDate',this.value)"></td>
+                <td><textarea class="cell-input" rows="1" onchange="updateOnboarding('${id}',${i},'note',this.value)">${escapeHtml(row.note)}</textarea></td>
+                <td style="text-align:center;">${(isAdmin() && row.isCustom) ? `<span class="row-x" onclick="deleteOnboardRow('${id}',${i})">✕</span>` : ''}</td>
+              </tr>`).join('')}
+            <tr>
+              <td colspan="4">
+                <div class="add-item-row">
+                  <input type="text" class="cell-input" id="newOnboardItemInput" placeholder="輸入新報到流程項目名稱">
+                  <button class="btn btn-ghost btn-sm" onclick="addCustomOnboardItem('${id}')">＋ 新增項目</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  CATEGORY_ORDER.forEach(cat => {
+    const rows = data.categories[cat];
+    const cols = colsOf(cat);
+    html += `
+    <div class="panel">
+      <div class="section-title">${cat} <span class="tag">共 ${rows.length} 項</span></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:26%;">${cat}</th>
+              ${cols.map(c=>`<th>${COL_LABEL[c]}</th>`).join('')}
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r,i) => `
+              <tr>
+                <td>
+                  <span class="item-dot ${dotClassForStatus(r.status)}"></span>${
+                    r.isCustom
+                      ? `<input class="cell-input" style="display:inline-block; width:calc(100% - 16px);" value="${escapeHtml(r.item)}" placeholder="項目名稱" onchange="updateItemName('${id}','${cat}',${i},this.value)">`
+                      : escapeHtml(r.item)
+                  }
+                </td>
+                ${cols.map(c => {
+                  if(c==='guide') return `<td><input class="cell-input" value="${escapeHtml(r.guide)}" placeholder="指導人員" onchange="updateCatRow('${id}','${cat}',${i},'guide',this.value)"></td>`;
+                  if(c==='trainDate') return `<td><input type="date" class="cell-input" value="${r.trainDate||''}" onchange="updateCatRow('${id}','${cat}',${i},'trainDate',this.value)"></td>`;
+                  if(c==='checker') return `<td><input class="cell-input" value="${escapeHtml(r.checker)}" placeholder="驗收人員" onchange="updateCatRow('${id}','${cat}',${i},'checker',this.value)"></td>`;
+                  if(c==='checkDate') return `<td><input type="date" class="cell-input" value="${r.checkDate||''}" onchange="updateCatRow('${id}','${cat}',${i},'checkDate',this.value)"></td>`;
+                  if(c==='status') return `<td><select class="cell-input" onchange="updateCatRow('${id}','${cat}',${i},'status',this.value)">${STATUS_OPTIONS.map(s=>`<option value="${s}" ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>`;
+                  return '';
+                }).join('')}
+                <td style="text-align:center;">${(isAdmin() && r.isCustom) ? `<span class="row-x" onclick="deleteCatRow('${id}','${cat}',${i})">✕</span>` : ''}</td>
+              </tr>`).join('')}
+            <tr>
+              <td colspan="${cols.length + 2}">
+                <div class="add-item-row">
+                  <input type="text" class="cell-input" id="newItemInput_${cat}" placeholder="輸入新項目名稱">
+                  <button class="btn btn-ghost btn-sm" onclick="addCustomItem('${id}','${cat}')">＋ 新增項目</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('content').innerHTML = html;
+}
+
+async function persistTrainingData(id){
+  await storageSet('training-data:' + id, trainingData[id], true);
+}
+function updateOnboarding(id, idx, field, value){
+  trainingData[id].onboarding[idx][field] = value;
+  persistTrainingData(id);
+  if(field === 'completeDate') renderEmployeeDetail(id); // 更新圓點顏色
+}
+function updateOnboardItemName(id, idx, value){
+  trainingData[id].onboarding[idx].item = value;
+  persistTrainingData(id);
+}
+function updateCatRow(id, cat, idx, field, value){
+  trainingData[id].categories[cat][idx][field] = value;
+  persistTrainingData(id);
+  if(field === 'status') renderEmployeeDetail(id); // 更新圓點顏色
+}
+function updateItemName(id, cat, idx, value){
+  trainingData[id].categories[cat][idx].item = value;
+  persistTrainingData(id);
+}
+async function updateEmpField(id, field, value){
+  const emp = employees.find(e=>e.id===id);
+  if(!emp) return;
+  if(field === 'empClass' && emp.onboardStore){
+    const cls = orgStructure[value];
+    const validNames = cls ? cls.stores.map(s=>s.name) : [];
+    if(!validNames.includes(emp.onboardStore)) emp.onboardStore = ''; // 課別變更後，若原門市不在新課別中則清空
+  }
+  emp[field] = value;
+  await storageSet('employees', employees, true);
+  if(field === 'name' || field === 'empClass' || field === 'onboardDate') renderEmployeeDetail(id);
+}
+function computeThreeMonthDeadline(onboardDate){
+  if(!onboardDate) return '';
+  const d = new Date(onboardDate + 'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  d.setMonth(d.getMonth() + 3);
+  return d.toISOString().slice(0,10);
+}
+
+/* ---- 新增／刪除自訂項目 ---- */
+function addCustomOnboardItem(id){
+  const inputEl = document.getElementById('newOnboardItemInput');
+  const name = inputEl.value.trim();
+  if(!name){ showToast('請輸入項目名稱'); return; }
+  trainingData[id].onboarding.push({ item:name, completeDate:'', note:'', isCustom:true });
+  persistTrainingData(id);
+  renderEmployeeDetail(id);
+  showToast('已新增報到流程項目');
+}
+function deleteOnboardRow(id, idx){
+  trainingData[id].onboarding.splice(idx,1);
+  persistTrainingData(id);
+  renderEmployeeDetail(id);
+}
+function addCustomItem(id, cat){
+  const inputEl = document.getElementById('newItemInput_' + cat);
+  const name = inputEl.value.trim();
+  if(!name){ showToast('請輸入項目名稱'); return; }
+  trainingData[id].categories[cat].push({
+    item:name, guide:'', trainDate:'', checker:'', checkDate:'', status:'待驗收', isCustom:true
+  });
+  persistTrainingData(id);
+  renderEmployeeDetail(id);
+  showToast('已新增「' + cat + '」項目');
+}
+function deleteCatRow(id, cat, idx){
+  trainingData[id].categories[cat].splice(idx,1);
+  persistTrainingData(id);
+  renderEmployeeDetail(id);
+}
+
+/* ---- 規則頁 ---- */
+const RULE_STAGES = [
+  {
+    key:'onboarding', label:'入門', badge:'STAGE 1',
+    rows:[
+      ['訓練內容','總部報到、門市報到、商品學習、POS 實際演練（第三週開始）'],
+      ['週期區間','1～1.5 個月'],
+      ['驗收方式','共 4 次，考題考試'],
+      ['驗收人','副店長／小天使'],
+      ['考題配置','20 題，純商品考題，每題 5 分（滿分 100 分）'],
+      ['通過標準','單次成績 ≥ 85 分為通過'],
+      ['未通過處理','單次 &lt; 85 分：通報店長並加強訓練；連續 3 次 &lt; 85 分：立即啟動資遣機制'],
+      ['其他規定','週期結束前須完成全部 4 次考試；週期結束後與區店長進行面談，提供意見回饋'],
+    ]
+  },
+  {
+    key:'normal', label:'普通', badge:'STAGE 2',
+    rows:[
+      ['訓練內容','店務、商品學習'],
+      ['週期區間','1 個月'],
+      ['驗收方式','共 2 次正式考試，店務考試＋商品題庫抽考（依商品學習範圍抽 20 題）。補考不計入這 2 次之內'],
+      ['驗收人','副店長／小天使'],
+      ['考題配置','商品 20 題，每題 2.5 分（50 分）＋店務 10 題，每題 5 分（50 分），滿分 100 分'],
+      ['通過標準','單次成績 ≥ 85 分為通過'],
+      ['未通過處理','連續 2 次 &lt; 85 分：通報店長，啟動加強輔導機制，隔週安排 1 次補考；補考仍 &lt; 85 分：啟動資遣機制'],
+      ['排程規則（待系統實作）','第 2 次正式考試須提前於週期倒數第 2 週前完成，以保留最後 1 週作為補考緩衝'],
+      ['其他規定','週期結束後與區店長進行面談，提供意見回饋'],
+    ]
+  },
+  {
+    key:'hard', label:'困難', badge:'STAGE 3',
+    rows:[
+      ['訓練內容','店務、商品學習'],
+      ['週期區間','1 個月'],
+      ['驗收方式','共 2 次正式考試，店務考試＋商品題庫抽考（依商品學習範圍抽 20 題）。補考不計入這 2 次之內'],
+      ['驗收人','副店長／小天使'],
+      ['通過標準','單次成績 ≥ 85 分為通過'],
+      ['未通過處理','連續 2 次 &lt; 85 分：通報店長，啟動加強輔導機制，隔週安排 1 次補考；補考仍 &lt; 85 分：啟動資遣機制'],
+      ['其他規定','週期結束後與區店長進行面談，提供意見回饋'],
+    ],
+    timeline:[
+      ['第 1～2 週','完成 2 次正式考試（視情況含補考）'],
+      ['第 3 週','完成最終正職考試'],
+      ['第 4 週','辦理職等調整單'],
+    ]
+  },
+  {
+    key:'final', label:'最終正職考試', badge:'STAGE 4',
+    rows:[
+      ['應試時機','完成困難階段 2 次考試（含補考）並通過後，即可應試'],
+      ['提前申請','新人可依自身狀況主動申請提前應試，須於考試前 3 日告知該店主管'],
+      ['時限規定','最終考試日不得超過到職滿 3 個月'],
+      ['幹部留意事項','最終考試須於困難階段的第 3 週內完成，第 4 週預留辦理職等調整單'],
+    ]
+  },
+];
+
+function renderRules(){
+  document.getElementById('topbarActions').innerHTML = '';
+
+  const cards = RULE_STAGES.map((stage, idx) => {
+    const rowsHtml = stage.rows.map(([label,val]) => `
+      <div class="rule-row">
+        <div class="rule-label">${escapeHtml(label)}</div>
+        <div class="rule-value">${val}</div>
+      </div>`).join('');
+
+    const timelineHtml = stage.timeline ? `
+      <div class="rule-mini-timeline">
+        ${stage.timeline.map(([w,d]) => `
+          <div class="rule-mini-step">
+            <div class="rule-mini-week">${escapeHtml(w)}</div>
+            <div class="rule-mini-desc">${escapeHtml(d)}</div>
+          </div>`).join('<div class="rule-mini-arrow">→</div>')}
+      </div>` : '';
+
+    const linkage = stage.key === 'onboarding'
+      ? `<div class="rule-linkage">📊 本階段成績連動：待「商品測驗」功能建置後串接（目前為預留欄位）</div>`
+      : `<div class="rule-linkage">📊 本階段測驗成績連動：待「商品測驗」／「店務測驗」功能建置後串接（目前為預留欄位）</div>`;
+
+    return `
+      <div class="stage-card">
+        <div class="stage-card-head">
+          <span class="stage-badge">${stage.badge}</span>
+          <h3>${escapeHtml(stage.label)}</h3>
+        </div>
+        ${rowsHtml}
+        ${timelineHtml}
+        ${linkage}
+      </div>
+      ${idx < RULE_STAGES.length - 1 ? '<div class="stage-connector">↓</div>' : ''}
+    `;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="panel" style="margin-bottom:22px;">
+      <div class="section-title" style="margin-bottom:8px;">總覽</div>
+      <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.8; margin:0;">
+        新人從報到到轉正共分四個訓練階段：<strong>入門 → 普通 → 困難 → 最終正職考試</strong>，
+        依序完成前一階段驗收後才進入下一階段。以下為各階段的訓練內容、驗收方式與未通過處理原則。
+      </p>
+    </div>
+    <div class="stage-timeline">${cards}</div>
+  `;
+}
+
+/* ===================== 店務測驗：完整題庫／正式考題 ===================== */
+async function loadExamRecords(employeeId){
+  if(!storeExamRecordsCache[employeeId]){
+    storeExamRecordsCache[employeeId] = await storageGet('exam-records:' + employeeId, true) || [];
+  }
+  return storeExamRecordsCache[employeeId];
+}
+async function saveExamRecords(employeeId){
+  await storageSet('exam-records:' + employeeId, storeExamRecordsCache[employeeId], true);
+}
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+async function renderStoreTab(){
+  document.getElementById('topbarActions').innerHTML = '';
+  const tabsHtml = `
+    <div class="seg-tabs">
+      <button class="seg-tab ${storeSubView==='bank'?'active':''}" onclick="setStoreSubView('bank')">📚 完整題庫</button>
+      <button class="seg-tab ${storeSubView==='exam'?'active':''}" onclick="setStoreSubView('exam')">📝 正式考題</button>
+    </div>
+    <div id="storeSubContent"></div>`;
+  document.getElementById('content').innerHTML = tabsHtml;
+  if(storeSubView === 'bank') renderStoreBank();
+  else await renderStoreExamGenerator();
+}
+function setStoreSubView(v){
+  storeSubView = v;
+  lastGeneratedExam = null;
+  render();
+}
+
+/* ---- 完整題庫 ---- */
+function renderStoreBank(){
+  const stageTabsHtml = STORE_STAGE_ORDER.map(s => `
+    <button class="seg-tab ${bankStageView===s?'active':''}" onclick="setBankStage('${s}')">${escapeHtml(s)} (${storeQuestionBank[s].length})</button>
+  `).join('');
+
+  const qs = storeQuestionBank[bankStageView];
+  const rowsHtml = qs.map((q,i) => renderBankQuestionCard(bankStageView, q, i)).join('');
+
+  document.getElementById('storeSubContent').innerHTML = `
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="seg-tabs" style="margin-bottom:0;">${stageTabsHtml}</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span>${escapeHtml(bankStageView)}題庫</span><span style="font-size:12px; font-weight:400; color:var(--ink-soft);">共 ${qs.length} 題</span></div>
+      <div class="bank-list">${rowsHtml || '<p style="font-size:13px;color:var(--ink-soft);">此階段尚無題目。</p>'}</div>
+      ${isAdmin() ? renderAddQuestionForm() : ''}
+    </div>
+  `;
+  if(isAdmin()) toggleNewQFields();
+}
+function setBankStage(s){ bankStageView = s; renderStoreBank(); }
+
+function renderBankQuestionCard(stage, q, idx){
+  const delBtn = isAdmin() ? `<span class="row-x" onclick="deleteBankQuestion('${stage}',${idx})" title="刪除題目">✕</span>` : '';
+  const catField = isAdmin()
+    ? `<input class="cell-input bank-cat-input" value="${escapeHtml(q.category)}" placeholder="分類標籤" onchange="updateBankField('${stage}',${idx},'category',this.value)">`
+    : `<span class="bank-cat-label">${escapeHtml(q.category)}</span>`;
+  const stemField = isAdmin()
+    ? `<textarea class="cell-input bank-stem-input" rows="2" onchange="updateBankField('${stage}',${idx},'question',this.value)">${escapeHtml(q.question)}</textarea>`
+    : `<div class="bank-stem-label">${escapeHtml(q.question)}</div>`;
+
+  let bodyHtml = '';
+  if(q.type === 'choice'){
+    bodyHtml = `<div class="bank-options">${q.options.map((opt,oi) => `
+      <div class="bank-opt-row ${oi===q.correctIndex?'correct':''}">
+        <span class="bank-opt-letter">${'ABCD'[oi]}</span>
+        ${isAdmin()
+          ? `<input class="cell-input" value="${escapeHtml(opt)}" onchange="updateBankOption('${stage}',${idx},${oi},this.value)">`
+          : `<span class="bank-opt-text">${escapeHtml(opt)}</span>`}
+        ${isAdmin()
+          ? `<label class="bank-correct-radio"><input type="radio" name="correct_${stage}_${idx}" ${oi===q.correctIndex?'checked':''} onchange="updateBankField('${stage}',${idx},'correctIndex',${oi})"> 正解</label>`
+          : (oi===q.correctIndex ? '<span class="bank-correct-tag">✓ 正解</span>' : '')}
+      </div>`).join('')}</div>`;
+  } else {
+    bodyHtml = `<div class="bank-ref-answer"><label>參考答案</label>${
+      isAdmin()
+        ? `<textarea class="cell-input" rows="2" onchange="updateBankField('${stage}',${idx},'referenceAnswer',this.value)">${escapeHtml(q.referenceAnswer)}</textarea>`
+        : `<div>${escapeHtml(q.referenceAnswer)}</div>`
+    }</div>`;
+  }
+
+  return `
+    <div class="bank-card">
+      <div class="bank-card-head">${catField}${delBtn}</div>
+      ${stemField}
+      ${bodyHtml}
+    </div>`;
+}
+
+function renderAddQuestionForm(){
+  return `
+    <div class="bank-add-form">
+      <div class="panel-title" style="margin-bottom:10px;">新增題目</div>
+      <div class="field" style="max-width:220px;">
+        <label>題型</label>
+        <select id="newQType" onchange="toggleNewQFields()">
+          <option value="choice">選擇題</option>
+          <option value="short">簡答題</option>
+        </select>
+      </div>
+      <div class="field"><label>分類標籤</label><input type="text" id="newQCategory" placeholder="例如：DOA作業流程"></div>
+      <div class="field"><label>題目</label><textarea class="cell-input" style="border:1px solid var(--line);" rows="2" id="newQStem" placeholder="請輸入題目內容"></textarea></div>
+      <div id="newQChoiceFields">
+        ${['A','B','C','D'].map((L,oi) => `
+          <div class="field" style="display:flex; gap:8px; align-items:center;">
+            <span style="width:20px; font-weight:800;">${L}</span>
+            <input type="text" class="cell-input" style="border:1px solid var(--line);" id="newQOpt${oi}" placeholder="選項內容">
+            <label style="font-size:12px; display:flex; align-items:center; gap:4px; white-space:nowrap;"><input type="radio" name="newQCorrect" value="${oi}" ${oi===0?'checked':''}> 正解</label>
+          </div>`).join('')}
+      </div>
+      <div id="newQShortFields" style="display:none;">
+        <div class="field"><label>參考答案</label><textarea class="cell-input" style="border:1px solid var(--line);" rows="2" id="newQAnswer" placeholder="請輸入參考答案"></textarea></div>
+      </div>
+      <button class="btn btn-gold" onclick="addBankQuestion()">＋ 新增題目</button>
+    </div>`;
+}
+function toggleNewQFields(){
+  const typeEl = document.getElementById('newQType');
+  if(!typeEl) return;
+  const type = typeEl.value;
+  document.getElementById('newQChoiceFields').style.display = type==='choice' ? 'block' : 'none';
+  document.getElementById('newQShortFields').style.display = type==='short' ? 'block' : 'none';
+}
+
+async function persistBank(){ await storageSet('store-question-bank', storeQuestionBank, true); }
+function updateBankField(stage, idx, field, value){
+  storeQuestionBank[stage][idx][field] = value;
+  persistBank();
+  if(field==='correctIndex') renderStoreBank();
+}
+function updateBankOption(stage, idx, oi, value){
+  storeQuestionBank[stage][idx].options[oi] = value;
+  persistBank();
+}
+function deleteBankQuestion(stage, idx){
+  if(!confirm('確定要刪除這一題嗎？此動作無法復原。')) return;
+  storeQuestionBank[stage].splice(idx,1);
+  persistBank();
+  renderStoreBank();
+  showToast('已刪除題目');
+}
+function addBankQuestion(){
+  const stage = bankStageView;
+  const type = document.getElementById('newQType').value;
+  const category = document.getElementById('newQCategory').value.trim();
+  const stem = document.getElementById('newQStem').value.trim();
+  if(!stem){ showToast('請輸入題目內容'); return; }
+  let q;
+  if(type === 'choice'){
+    const options = [0,1,2,3].map(i => document.getElementById('newQOpt'+i).value.trim());
+    if(options.some(o=>!o)){ showToast('請完整填寫四個選項'); return; }
+    const correctRadio = document.querySelector('input[name="newQCorrect"]:checked');
+    const correctIndex = correctRadio ? parseInt(correctRadio.value,10) : 0;
+    q = { id: uid('q'), type:'choice', category, question:stem, options, correctIndex };
+  } else {
+    const answer = document.getElementById('newQAnswer').value.trim();
+    if(!answer){ showToast('請輸入參考答案'); return; }
+    q = { id: uid('q'), type:'short', category, question:stem, referenceAnswer: answer };
+  }
+  storeQuestionBank[stage].push(q);
+  persistBank();
+  renderStoreBank();
+  showToast('已新增題目');
+}
+
+/* ---- 正式考題 ---- */
+async function renderStoreExamGenerator(){
+  if(!examGenEmployeeId && employees.length) examGenEmployeeId = employees[0].id;
+  if(examGenEmployeeId && !employees.some(e=>e.id===examGenEmployeeId)) examGenEmployeeId = employees.length ? employees[0].id : '';
+
+  const empOptions = employees.map(e=>`<option value="${e.id}" ${e.id===examGenEmployeeId?'selected':''}>${escapeHtml(e.name)}</option>`).join('');
+  const stageOptions = STORE_STAGE_ORDER.map(s=>`<option value="${s}" ${s===examGenStage?'selected':''}>${escapeHtml(s)}</option>`).join('');
+
+  let historyHtml = '<p style="font-size:13px;color:var(--ink-soft);">請先建立員工。</p>';
+  if(examGenEmployeeId){
+    const records = await loadExamRecords(examGenEmployeeId);
+    historyHtml = renderExamHistoryTable(records);
+  }
+
+  document.getElementById('storeSubContent').innerHTML = `
+    <div class="panel">
+      <div class="panel-title">產生正式考題</div>
+      <div class="hdr-grid" style="margin-bottom:16px; color:var(--ink);">
+        <div class="field" style="margin-bottom:0;">
+          <label>員工</label>
+          <select id="examGenEmpSelect" onchange="onExamGenEmpChange(this.value)" ${employees.length?'':'disabled'}>${employees.length ? empOptions : '<option value="">尚無員工</option>'}</select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>訓練階段</label>
+          <select id="examGenStageSelect" onchange="examGenStage=this.value">${stageOptions}</select>
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="generateExam()" ${employees.length? '' : 'disabled'}>🎲 產生考題（隨機抽 ${STORE_DRAW_COUNT} 題店務題）</button>
+      <p style="font-size:12px; color:var(--ink-soft); margin-top:10px; line-height:1.6;">
+        商品題庫尚未建置，本次僅產生店務部分（${STORE_DRAW_COUNT} 題 × ${STORE_POINTS_PER_Q} 分＝${STORE_DRAW_COUNT*STORE_POINTS_PER_Q} 分）；
+        商品部分（滿分 ${PRODUCT_MAX_POINTS} 分）請於紙本閱卷後於「輸入分數」手動填入，系統會自動加總並依 ${EXAM_PASS_SCORE} 分判定合格／不合格。
+        重新產生考題時，系統會盡量避開此員工在同階段先前已抽過的題目。
+      </p>
+      <div id="currentExamArea"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">
+        <span>測驗紀錄</span>
+        <span style="font-size:12px; font-weight:400; color:var(--ink-soft);">${examGenEmployeeId ? escapeHtml(employees.find(e=>e.id===examGenEmployeeId)?.name||'') : ''}</span>
+      </div>
+      ${historyHtml}
+    </div>
+  `;
+
+  if(lastGeneratedExam && lastGeneratedExam.employeeId === examGenEmployeeId && lastGeneratedExam.stage === examGenStage){
+    renderCurrentExamArea(lastGeneratedExam);
+  }
+}
+function onExamGenEmpChange(id){
+  examGenEmployeeId = id;
+  lastGeneratedExam = null;
+  render();
+}
+
+function renderExamHistoryTable(records){
+  if(!records.length) return '<p style="font-size:13px;color:var(--ink-soft);">尚無測驗紀錄。</p>';
+  const sorted = [...records].sort((a,b)=> b.createdAt.localeCompare(a.createdAt));
+  return `
+    <table>
+      <thead><tr><th>階段</th><th>產生日期</th><th>店務得分</th><th>商品得分</th><th>總分</th><th>驗收人</th><th>狀態</th><th style="width:110px;"></th></tr></thead>
+      <tbody>
+        ${sorted.map(r => `
+          <tr>
+            <td>${escapeHtml(r.stage)}${r.isRetake ? ' <span class="retake-tag">補考</span>' : ''}</td>
+            <td>${escapeHtml(r.createdAt)}</td>
+            <td>${r.storeScore!=null ? r.storeScore : '—'}</td>
+            <td>${r.productScore!=null ? r.productScore : '—'}</td>
+            <td>${r.totalScore!=null ? r.totalScore : '—'}</td>
+            <td>${escapeHtml(r.gradedBy||'—')}</td>
+            <td><span class="status-pill ${r.status==='合格'?'status-ok':r.status==='不合格'?'status-warn':'status-pending'}">${escapeHtml(r.status)}</span></td>
+            <td style="text-align:center;">
+              <button class="btn btn-ghost btn-sm" onclick="openGradeModal('${r.employeeId}','${r.id}')">${r.status==='待批改'?'輸入分數':'查看/修改'}</button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function generateExam(){
+  if(!examGenEmployeeId){ showToast('請先建立員工'); return; }
+  const stage = examGenStage;
+  const pool = storeQuestionBank[stage] || [];
+  if(pool.length < 1){ showToast('此階段題庫目前沒有題目'); return; }
+
+  const records = storeExamRecordsCache[examGenEmployeeId] || [];
+  const stageRecords = records.filter(r=>r.stage===stage).slice().sort((a,b)=>a.createdAt.localeCompare(b.createdAt));
+  const formalRecords = stageRecords.filter(r=>!r.isRetake);
+  const retakeRecords = stageRecords.filter(r=>r.isRetake);
+  const limit = STAGE_EXAM_LIMITS[stage] || 2;
+
+  let isRetake = false;
+  if(formalRecords.length < limit){
+    isRetake = false; // 正式驗收名額尚未用完
+  } else {
+    const latestRecord = stageRecords[stageRecords.length - 1];
+    if(retakeRecords.length > 0){
+      showToast('此員工已完成「' + stage + '」階段所有驗收機會（含補考），若仍未合格請依規定啟動資遣機制。');
+      return;
+    }
+    if(!latestRecord || latestRecord.status === '合格'){
+      showToast('此員工已完成「' + stage + '」階段驗收（共' + limit + '次）且已合格，無需再產生考題。');
+      return;
+    }
+    if(latestRecord.status === '待批改'){
+      showToast('此員工在「' + stage + '」階段尚有一份考卷待批改分數，請先完成批改再產生新考題。');
+      return;
+    }
+    // 已用完正式驗收名額，且最近一次為不合格 → 開放一次補考
+    isRetake = true;
+  }
+
+  const usedIds = new Set();
+  stageRecords.forEach(r => (r.questions||[]).forEach(q => usedIds.add(q.id)));
+
+  const drawCount = Math.min(STORE_DRAW_COUNT, pool.length);
+  const fresh = pool.filter(q => !usedIds.has(q.id));
+  let picked;
+  if(fresh.length >= drawCount){
+    picked = shuffleArray(fresh).slice(0, drawCount);
+  } else {
+    picked = shuffleArray(fresh);
+    const need = drawCount - picked.length;
+    const usedPool = pool.filter(q => usedIds.has(q.id));
+    picked = picked.concat(shuffleArray(usedPool).slice(0, need));
+    showToast('此階段新題不足，已從舊題中補足以避免超出題庫');
+  }
+
+  const record = {
+    id: uid('exam'),
+    employeeId: examGenEmployeeId,
+    stage,
+    isRetake,
+    createdAt: new Date().toISOString().slice(0,10),
+    questions: picked.map(q => JSON.parse(JSON.stringify(q))),
+    storeScore: null,
+    productScore: null,
+    totalScore: null,
+    status: '待批改',
+    gradedBy: '',
+    gradedAt: '',
+  };
+
+  if(!storeExamRecordsCache[examGenEmployeeId]) storeExamRecordsCache[examGenEmployeeId] = [];
+  storeExamRecordsCache[examGenEmployeeId].push(record);
+  saveExamRecords(examGenEmployeeId);
+
+  lastGeneratedExam = record;
+  render();
+  showToast('已產生考卷，可下載列印或直接輸入分數');
+}
+
+function renderCurrentExamArea(record){
+  const emp = employees.find(e=>e.id===record.employeeId);
+  const empName = emp ? emp.name : '';
+  document.getElementById('currentExamArea').innerHTML = `
+    <div class="current-exam-box">
+      <div class="current-exam-head">
+        <div><strong>${escapeHtml(empName)}</strong>　${escapeHtml(record.stage)}階段${record.isRetake ? ' <span class="retake-tag">補考</span>' : ''}　產生於 ${escapeHtml(record.createdAt)}</div>
+        <div class="toolbar">
+          <button class="btn btn-ghost btn-sm" onclick="printExam('${record.employeeId}','${record.id}', false)">🖨 下載考題卷（PDF）</button>
+          <button class="btn btn-ghost btn-sm" onclick="printExam('${record.employeeId}','${record.id}', true)">🖨 下載答案卷（PDF）</button>
+          <button class="btn btn-gold btn-sm" onclick="openGradeModal('${record.employeeId}','${record.id}')">輸入分數</button>
+        </div>
+      </div>
+      <ol class="current-exam-list">
+        ${record.questions.map(q => `
+          <li>
+            <div class="cq-cat">${escapeHtml(q.category)}</div>
+            <div class="cq-stem">${escapeHtml(q.question)}</div>
+            ${q.type==='choice'
+              ? `<div class="cq-opts">${q.options.map((o,oi)=>`<div class="${oi===q.correctIndex?'cq-correct':''}">${'ABCD'[oi]}. ${escapeHtml(o)}</div>`).join('')}</div>`
+              : `<div class="cq-answer">參考答案：${escapeHtml(q.referenceAnswer)}</div>`}
+          </li>`).join('')}
+      </ol>
+    </div>`;
+}
+
+/* ---- 列印（考題卷／答案卷）：使用瀏覽器列印功能，於列印視窗選擇「另存為 PDF」 ---- */
+async function printExam(employeeId, examId, withAnswers){
+  const records = await loadExamRecords(employeeId);
+  const record = records.find(r=>r.id===examId);
+  if(!record){ showToast('找不到這份考卷'); return; }
+  const emp = employees.find(e=>e.id===employeeId);
+  const empName = emp ? emp.name : '';
+  const empCode = emp ? (emp.empCode||'') : '';
+  const title = withAnswers ? '答案卷' : '考題卷';
+
+  const qHtml = record.questions.map((q,i) => {
+    const optsOrBlank = q.type === 'choice'
+      ? `<div class="print-opts">${q.options.map((o,oi)=>`<div class="print-opt ${withAnswers && oi===q.correctIndex ? 'print-opt-correct':''}">${'ABCD'[oi]}. ${escapeHtml(o)}${withAnswers && oi===q.correctIndex ? '　←正解' : ''}</div>`).join('')}</div>`
+      : (withAnswers
+          ? `<div class="print-answer-line">參考答案：${escapeHtml(q.referenceAnswer)}</div>`
+          : `<div class="print-blank-lines"><div class="print-line"></div><div class="print-line"></div></div>`);
+    return `<div class="print-q"><div class="print-q-head">${i+1}. 【${escapeHtml(q.category)}】${escapeHtml(q.question)}</div>${optsOrBlank}</div>`;
+  }).join('');
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="print-header">
+      <h1>${escapeHtml(record.stage)}階段 店務測驗 ${title}</h1>
+      <div class="print-meta">姓名：${escapeHtml(empName)}　　工號：${escapeHtml(empCode)}　　日期：${escapeHtml(record.createdAt)}　　得分：＿＿＿＿</div>
+    </div>
+    ${qHtml}
+  `;
+  setTimeout(()=> window.print(), 150);
+}
+
+/* ---- 輸入分數 ---- */
+let gradeModalTarget = null;
+async function openGradeModal(employeeId, examId){
+  const records = await loadExamRecords(employeeId);
+  const record = records.find(r=>r.id===examId);
+  if(!record){ showToast('找不到這份考卷'); return; }
+  gradeModalTarget = { employeeId, examId };
+  document.getElementById('gradeModalSub').textContent = record.stage + ' 階段考卷，共 ' + record.questions.length + ' 題店務題';
+  document.getElementById('gradeGradedBy').value = record.gradedBy || '';
+  document.getElementById('gradeStoreMax').textContent = record.questions.length;
+  const correctInput = document.getElementById('gradeStoreCorrect');
+  correctInput.max = record.questions.length;
+  correctInput.value = record.storeScore!=null ? Math.round(record.storeScore / STORE_POINTS_PER_Q) : '';
+  document.getElementById('gradeProductScore').value = record.productScore!=null ? record.productScore : '';
+  updateGradeTotalPreview();
+  document.getElementById('gradeModal').classList.add('show');
+}
+function closeGradeModal(){
+  document.getElementById('gradeModal').classList.remove('show');
+  gradeModalTarget = null;
+}
+function updateGradeTotalPreview(){
+  const correct = parseFloat(document.getElementById('gradeStoreCorrect').value) || 0;
+  const product = parseFloat(document.getElementById('gradeProductScore').value) || 0;
+  const storeScore = correct * STORE_POINTS_PER_Q;
+  const total = storeScore + product;
+  const pass = total >= EXAM_PASS_SCORE;
+  document.getElementById('gradeTotalPreview').innerHTML =
+    `店務得分 ${storeScore} 分 ＋ 商品得分 ${product} 分 ＝ <strong>總分 ${total} 分</strong>　<span class="status-pill ${pass?'status-ok':'status-warn'}">${pass?'合格':'未達合格'}</span>`;
+}
+async function saveGrade(){
+  if(!gradeModalTarget) return;
+  const { employeeId, examId } = gradeModalTarget;
+  const records = storeExamRecordsCache[employeeId];
+  const record = records.find(r=>r.id===examId);
+  if(!record) return;
+  const correctInputVal = document.getElementById('gradeStoreCorrect').value;
+  const productInputVal = document.getElementById('gradeProductScore').value;
+  if(correctInputVal === ''){ showToast('請輸入店務答對題數'); return; }
+  const correct = Math.max(0, Math.min(record.questions.length, parseInt(correctInputVal,10) || 0));
+  const product = productInputVal === '' ? 0 : Math.max(0, Math.min(PRODUCT_MAX_POINTS, parseFloat(productInputVal)));
+  const storeScore = correct * STORE_POINTS_PER_Q;
+  const total = storeScore + product;
+  record.storeScore = storeScore;
+  record.productScore = product;
+  record.totalScore = total;
+  record.status = total >= EXAM_PASS_SCORE ? '合格' : '不合格';
+  record.gradedBy = document.getElementById('gradeGradedBy').value.trim();
+  record.gradedAt = new Date().toISOString().slice(0,10);
+  await saveExamRecords(employeeId);
+  closeGradeModal();
+  render();
+  showToast('已儲存分數：' + total + ' 分（' + record.status + '）');
+}
+
+/* ---- 商品測驗 / 店務測驗（佔位頁） ---- */
+
+function renderPlaceholder(title){
+  document.getElementById('topbarActions').innerHTML = '';
+  document.getElementById('content').innerHTML = `
+    <div class="panel">
+      <div class="empty-state">
+        <div class="big">🛠️</div>
+        <h2>${title}內容建置中</h2>
+        <p>此分頁架構已建立，測驗題目與內容將於後續補上。</p>
+        <div style="margin-top:14px;"><span class="badge-soon">敬請期待</span></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== 員工新增／移除 ===================== */
+function openEmpModal(){
+  document.getElementById('newEmpName').value = '';
+  document.getElementById('newEmpCode').value = '';
+  document.getElementById('newEmpClass').value = '';
+  document.getElementById('empModal').classList.add('show');
+}
+function closeEmpModal(){
+  document.getElementById('empModal').classList.remove('show');
+}
+async function addEmployee(){
+  const name = document.getElementById('newEmpName').value.trim();
+  const code = document.getElementById('newEmpCode').value.trim();
+  const cls = document.getElementById('newEmpClass').value;
+  if(!name){ showToast('請輸入員工姓名'); return; }
+  if(employees.some(e=>e.name===name)){ showToast('此員工已存在'); return; }
+  const emp = { id: uid('emp'), name, empCode: code, empClass: cls, onboardDate:'', onboardStore:'' };
+  employees.push(emp);
+  await storageSet('employees', employees, true);
+  trainingData[emp.id] = blankTrainingData();
+  await storageSet('training-data:' + emp.id, trainingData[emp.id], true);
+  closeEmpModal();
+  render();
+  showToast('已新增員工：' + name);
+}
+async function removeEmployee(id){
+  const emp = employees.find(e=>e.id===id);
+  if(!emp) return;
+  if(!confirm('確定要移除「' + emp.name + '」及其教育訓練總表嗎？此動作無法復原。')) return;
+  employees = employees.filter(e=>e.id!==id);
+  await storageSet('employees', employees, true);
+  delete trainingData[id];
+  await storageSet('training-data:' + id, null, true);
+  if(selectedEmployeeId === id) selectedEmployeeId = null;
+  render();
+  showToast('已移除員工：' + emp.name);
+}
+
+/* ===================== 設定：組織架構（課別／門市）管理 ===================== */
+async function persistOrgStructure(){
+  await storageSet('org-structure', orgStructure, true);
+}
+
+function renderSettings(){
+  document.getElementById('topbarActions').innerHTML = '';
+
+  const cardsHtml = CLASS_OPTIONS.map(cls => {
+    const info = orgStructure[cls] || { code:'', leader:'', stores:[] };
+    const storesHtml = info.stores.map((s, si) => `
+      <div class="org-store-row">
+        ${isAdmin() ? `
+          <input class="cell-input org-store-code" value="${escapeHtml(s.code)}" placeholder="門市代號" onchange="updateOrgStore('${cls}',${si},'code',this.value)">
+          <input class="cell-input org-store-name" value="${escapeHtml(s.name)}" placeholder="門市名稱" onchange="updateOrgStore('${cls}',${si},'name',this.value)">
+          <input class="cell-input org-store-manager" value="${escapeHtml(s.manager)}" placeholder="負責人" onchange="updateOrgStore('${cls}',${si},'manager',this.value)">
+          <span class="row-x" onclick="deleteOrgStore('${cls}',${si})" title="移除門市">✕</span>
+        ` : `
+          <span class="org-store-code-label">${escapeHtml(s.code)}</span>
+          <span class="org-store-name-label">${escapeHtml(s.name)}</span>
+          <span class="org-store-manager-label">${escapeHtml(s.manager)}</span>
+        `}
+      </div>`).join('');
+
+    return `
+      <div class="panel org-card">
+        <div class="org-card-head">
+          <div class="org-class-title">${escapeHtml(cls)}</div>
+          <div class="org-class-fields">
+            <div class="field" style="margin-bottom:0;">
+              <label>課別代號</label>
+              ${isAdmin()
+                ? `<input class="cell-input" style="border:1px solid var(--line);" value="${escapeHtml(info.code)}" onchange="updateOrgClassField('${cls}','code',this.value)">`
+                : `<div class="hdr-readonly-light">${escapeHtml(info.code)}</div>`}
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>課長</label>
+              ${isAdmin()
+                ? `<input class="cell-input" style="border:1px solid var(--line);" value="${escapeHtml(info.leader)}" onchange="updateOrgClassField('${cls}','leader',this.value)">`
+                : `<div class="hdr-readonly-light">${escapeHtml(info.leader)}</div>`}
+            </div>
+          </div>
+        </div>
+        <div class="org-store-list">
+          <div class="org-store-row org-store-header">
+            <span>門市代號</span><span>門市名稱</span><span>負責人</span><span></span>
+          </div>
+          ${storesHtml || '<p style="font-size:13px;color:var(--ink-soft); padding:8px 0;">此課別尚無門市。</p>'}
+        </div>
+        ${isAdmin() ? `
+          <div class="add-item-row" style="margin-top:12px;">
+            <input type="text" class="cell-input" style="border:1px solid var(--line); max-width:100px;" id="newStoreCode_${cls}" placeholder="代號">
+            <input type="text" class="cell-input" style="border:1px solid var(--line);" id="newStoreName_${cls}" placeholder="門市名稱">
+            <input type="text" class="cell-input" style="border:1px solid var(--line); max-width:120px;" id="newStoreManager_${cls}" placeholder="負責人">
+            <button class="btn btn-ghost btn-sm" onclick="addOrgStore('${cls}')">＋ 新增門市</button>
+          </div>` : ''}
+      </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="section-title" style="margin-bottom:8px;">組織架構總覽</div>
+      <p style="font-size:13.5px; color:var(--ink-soft); line-height:1.8; margin:0;">
+        依課別維護所屬門市清單。新增員工並選擇「課別」後，員工詳細頁的「報到門市」下拉選單會自動列出該課別底下的門市。
+        ${isAdmin() ? '' : '（僅管理者可編輯此頁內容）'}
+      </p>
+    </div>
+    ${cardsHtml}
+  `;
+}
+
+function updateOrgClassField(cls, field, value){
+  orgStructure[cls][field] = value;
+  persistOrgStructure();
+}
+function updateOrgStore(cls, idx, field, value){
+  orgStructure[cls].stores[idx][field] = value;
+  persistOrgStructure();
+}
+function deleteOrgStore(cls, idx){
+  if(!confirm('確定要移除這間門市嗎？')) return;
+  orgStructure[cls].stores.splice(idx,1);
+  persistOrgStructure();
+  renderSettings();
+  showToast('已移除門市');
+}
+function addOrgStore(cls){
+  const code = document.getElementById('newStoreCode_' + cls).value.trim();
+  const name = document.getElementById('newStoreName_' + cls).value.trim();
+  const manager = document.getElementById('newStoreManager_' + cls).value.trim();
+  if(!name){ showToast('請輸入門市名稱'); return; }
+  orgStructure[cls].stores.push({ code, name, manager });
+  persistOrgStructure();
+  renderSettings();
+  showToast('已新增門市：' + name);
+}
+</script>
+</body>
+</html>
