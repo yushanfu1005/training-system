@@ -686,6 +686,58 @@
   </div>
 </div>
 
+<!-- account manage modal -->
+<div class="modal-backdrop" id="accountModal">
+  <div class="modal">
+    <h3>新增帳號</h3>
+    <p class="sub">建立登入帳號並指定角色。「課別主管」只能瀏覽與編輯自己負責課別底下的員工。</p>
+    <div class="field">
+      <label>帳號 *</label>
+      <input type="text" id="newAccUsername" placeholder="英數字，作為登入帳號">
+    </div>
+    <div class="field">
+      <label>密碼 *</label>
+      <input type="text" id="newAccPassword" placeholder="請設定初始密碼">
+    </div>
+    <div class="field">
+      <label>姓名</label>
+      <input type="text" id="newAccName" placeholder="顯示用姓名">
+    </div>
+    <div class="field">
+      <label>角色 *</label>
+      <select id="newAccRole" onchange="toggleAccountClassField()">
+        <option value="class_manager">課別主管</option>
+        <option value="admin">管理者</option>
+      </select>
+    </div>
+    <div class="field" id="newAccClassField">
+      <label>負責課別 *</label>
+      <select id="newAccClass">
+        <option value="">請選擇</option>
+        <option value="門市一課">門市一課</option>
+        <option value="門市二課">門市二課</option>
+        <option value="門市三課">門市三課</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAccountModal()">取消</button>
+      <button class="btn btn-gold" onclick="addAccount()">新增帳號</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用確認彈窗（用於刪除等破壞性操作） -->
+<div class="modal-backdrop" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmModalTitle">確認</h3>
+    <p class="sub" id="confirmModalMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConfirmModal()">取消</button>
+      <button class="btn btn-danger" onclick="confirmModalConfirm()">確定刪除</button>
+    </div>
+  </div>
+</div>
+
 <!-- 列印專用區塊，平常隱藏，列印時透過 CSS 顯示（可於列印視窗另存為 PDF） -->
 <div id="printArea"></div>
 
@@ -884,6 +936,39 @@ function escapeHtml(str){
   }[s]));
 }
 function isAdmin(){ return session && session.role === 'admin'; }
+// 通用確認彈窗（取代原本的瀏覽器原生 confirm()，樣式與系統其他彈窗一致）
+let confirmModalCallback = null;
+function openConfirmModal(title, message, onConfirm){
+  document.getElementById('confirmModalTitle').textContent = title;
+  document.getElementById('confirmModalMsg').textContent = message;
+  confirmModalCallback = onConfirm;
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeConfirmModal(){
+  document.getElementById('confirmModal').classList.remove('show');
+  confirmModalCallback = null;
+}
+function confirmModalConfirm(){
+  const cb = confirmModalCallback;
+  closeConfirmModal();
+  if(cb) cb();
+}
+// 若目前登入者是「課別主管」，回傳其負責課別；管理者與一般使用者回傳 null（代表不受課別限制／或無編輯權）
+function sessionScopeClass(){
+  return (session && session.role === 'class_manager') ? session.assignedClass : null;
+}
+function canEditEmployee(emp){
+  if(isAdmin()) return true;
+  const scope = sessionScopeClass();
+  if(scope) return emp.empClass === scope;
+  return false;
+}
+function roleLabel(s){
+  if(!s) return '一般使用者';
+  if(s.role === 'admin') return '管理者';
+  if(s.role === 'class_manager') return '課別主管・' + (s.assignedClass || '未指定課別');
+  return '一般使用者';
+}
 function dotClassForStatus(status){
   if(status === '合格') return 'dot-green';
   if(status === '不合格') return 'dot-red';
@@ -974,7 +1059,7 @@ async function handleLogin(){
     return;
   }
   errBox.style.display = 'none';
-  session = { username: found.username, role: found.role, name: found.name || found.username };
+  session = { username: found.username, role: found.role, name: found.name || found.username, assignedClass: found.assignedClass || '' };
 
   await storageSet('remembered-login', remember ? { username:u, password:p } : null, false);
 
@@ -982,7 +1067,7 @@ async function handleLogin(){
   document.getElementById('app').style.display = 'block';
   document.getElementById('whoLabel').textContent = session.name;
   document.getElementById('roleBadgeWrap').innerHTML =
-    `<span class="role-badge">${session.role === 'admin' ? '管理者' : '一般使用者'}</span>`;
+    `<span class="role-badge">${roleLabel(session)}</span>`;
 
   switchTab('training');
 }
@@ -1062,29 +1147,32 @@ function progressOf(id){
 
 async function renderEmployeeList(){
   document.getElementById('pageDesc').textContent = '點選員工即可查看該員工的教育訓練總表';
-  document.getElementById('topbarActions').innerHTML = isAdmin()
+  const scope = sessionScopeClass();
+  document.getElementById('topbarActions').innerHTML = (isAdmin() || scope)
     ? `<button class="btn btn-gold" onclick="openEmpModal()">＋ 新增員工</button>` : '';
 
-  if(!employees.length){
+  const visibleEmployees = scope ? employees.filter(e => e.empClass === scope) : employees;
+
+  if(!visibleEmployees.length){
     document.getElementById('content').innerHTML = `
       <div class="panel">
         <div class="empty-state">
           <div class="big">👤</div>
           <h2>尚未建立任何員工</h2>
-          <p>${isAdmin() ? '點選右上角「新增員工」建立第一位員工的教育訓練總表。' : '請聯繫管理者新增員工資料。'}</p>
+          <p>${(isAdmin() || scope) ? '點選右上角「新增員工」建立第一位員工的教育訓練總表。' : '請聯繫管理者新增員工資料。'}</p>
         </div>
       </div>`;
     return;
   }
 
   // 預先載入所有員工的訓練資料，以計算進度條
-  for(const e of employees){
+  for(const e of visibleEmployees){
     if(!trainingData[e.id]){
       trainingData[e.id] = hydrateTrainingData(await storageGet('training-data:' + e.id, true) || blankTrainingData());
     }
   }
 
-  const withProgress = employees.map(e => ({ e, p: progressOf(e.id) }));
+  const withProgress = visibleEmployees.map(e => ({ e, p: progressOf(e.id) }));
   const ongoing = withProgress.filter(x => x.p.total === 0 || x.p.pct < 100);
   const completed = withProgress.filter(x => x.p.total > 0 && x.p.pct === 100);
   const list = empListFilter === 'completed' ? completed : ongoing;
@@ -1109,7 +1197,7 @@ async function renderEmployeeList(){
 
   const cards = list.map(({e,p}) => `
     <div class="emp-card" onclick="openEmployee('${e.id}')">
-      ${isAdmin() ? `<span class="del-x" onclick="event.stopPropagation(); removeEmployee('${e.id}')" title="移除員工">✕</span>` : ''}
+      ${canEditEmployee(e) ? `<span class="del-x" onclick="event.stopPropagation(); removeEmployee('${e.id}')" title="移除員工">✕</span>` : ''}
       <div class="name">${escapeHtml(e.name)}</div>
       <div class="meta">
         工號：${escapeHtml(e.empCode||'—')}　課別：${escapeHtml(e.empClass||'—')}<br>
@@ -1128,6 +1216,14 @@ function setEmpListFilter(filter){
 }
 
 async function openEmployee(id){
+  const scope = sessionScopeClass();
+  if(scope){
+    const emp = employees.find(e=>e.id===id);
+    if(!emp || emp.empClass !== scope){
+      showToast('此員工不在你負責的課別範圍內');
+      return;
+    }
+  }
   if(!trainingData[id]){
     trainingData[id] = hydrateTrainingData(await storageGet('training-data:' + id, true) || blankTrainingData());
   }
@@ -1177,10 +1273,11 @@ async function renderEmployeeDetail(id){
         <div class="hdr-field"><label>工號</label><input type="text" value="${escapeHtml(emp.empCode||'')}" placeholder="請輸入工號" onchange="updateEmpField('${id}','empCode',this.value)"></div>
         <div class="hdr-field">
           <label>課別</label>
+          ${isAdmin() ? `
           <select onchange="updateEmpField('${id}','empClass',this.value)">
             <option value="" ${!emp.empClass?'selected':''}>請選擇</option>
             ${CLASS_OPTIONS.map(c=>`<option value="${c}" ${c===emp.empClass?'selected':''}>${c}</option>`).join('')}
-          </select>
+          </select>` : `<div class="hdr-readonly">${escapeHtml(emp.empClass||'—')}</div>`}
         </div>
         <div class="hdr-field"><label>報到日</label><input type="date" value="${emp.onboardDate||''}" onchange="updateEmpField('${id}','onboardDate',this.value)"></div>
         <div class="hdr-field">
@@ -1625,11 +1722,12 @@ function updateBankOption(stage, idx, oi, value){
   persistBank();
 }
 function deleteBankQuestion(stage, idx){
-  if(!confirm('確定要刪除這一題嗎？此動作無法復原。')) return;
-  storeQuestionBank[stage].splice(idx,1);
-  persistBank();
-  renderStoreBank();
-  showToast('已刪除題目');
+  openConfirmModal('刪除題目', '確定要刪除這一題嗎？此動作無法復原。', () => {
+    storeQuestionBank[stage].splice(idx,1);
+    persistBank();
+    renderStoreBank();
+    showToast('已刪除題目');
+  });
 }
 function addBankQuestion(){
   const stage = bankStageView;
@@ -1657,10 +1755,12 @@ function addBankQuestion(){
 
 /* ---- 正式考題 ---- */
 async function renderStoreExamGenerator(){
-  if(!examGenEmployeeId && employees.length) examGenEmployeeId = employees[0].id;
-  if(examGenEmployeeId && !employees.some(e=>e.id===examGenEmployeeId)) examGenEmployeeId = employees.length ? employees[0].id : '';
+  const scope = sessionScopeClass();
+  const scopedEmployees = scope ? employees.filter(e => e.empClass === scope) : employees;
+  if(!examGenEmployeeId && scopedEmployees.length) examGenEmployeeId = scopedEmployees[0].id;
+  if(examGenEmployeeId && !scopedEmployees.some(e=>e.id===examGenEmployeeId)) examGenEmployeeId = scopedEmployees.length ? scopedEmployees[0].id : '';
 
-  const empOptions = employees.map(e=>`<option value="${e.id}" ${e.id===examGenEmployeeId?'selected':''}>${escapeHtml(e.name)}</option>`).join('');
+  const empOptions = scopedEmployees.map(e=>`<option value="${e.id}" ${e.id===examGenEmployeeId?'selected':''}>${escapeHtml(e.name)}</option>`).join('');
   const stageOptions = STORE_STAGE_ORDER.map(s=>`<option value="${s}" ${s===examGenStage?'selected':''}>${escapeHtml(s)}</option>`).join('');
 
   let historyHtml = '<p style="font-size:13px;color:var(--ink-soft);">請先建立員工。</p>';
@@ -1675,14 +1775,14 @@ async function renderStoreExamGenerator(){
       <div class="hdr-grid" style="margin-bottom:16px; color:var(--ink);">
         <div class="field" style="margin-bottom:0;">
           <label>員工</label>
-          <select id="examGenEmpSelect" onchange="onExamGenEmpChange(this.value)" ${employees.length?'':'disabled'}>${employees.length ? empOptions : '<option value="">尚無員工</option>'}</select>
+          <select id="examGenEmpSelect" onchange="onExamGenEmpChange(this.value)" ${scopedEmployees.length?'':'disabled'}>${scopedEmployees.length ? empOptions : '<option value="">尚無員工</option>'}</select>
         </div>
         <div class="field" style="margin-bottom:0;">
           <label>訓練階段</label>
           <select id="examGenStageSelect" onchange="examGenStage=this.value">${stageOptions}</select>
         </div>
       </div>
-      <button class="btn btn-gold" onclick="generateExam()" ${employees.length? '' : 'disabled'}>🎲 產生考題（隨機抽 ${STORE_DRAW_COUNT} 題店務題）</button>
+      <button class="btn btn-gold" onclick="generateExam()" ${scopedEmployees.length? '' : 'disabled'}>🎲 產生考題（隨機抽 ${STORE_DRAW_COUNT} 題店務題）</button>
       <p style="font-size:12px; color:var(--ink-soft); margin-top:10px; line-height:1.6;">
         商品題庫尚未建置，本次僅產生店務部分（${STORE_DRAW_COUNT} 題 × ${STORE_POINTS_PER_Q} 分＝${STORE_DRAW_COUNT*STORE_POINTS_PER_Q} 分）；
         商品部分（滿分 ${PRODUCT_MAX_POINTS} 分）請於紙本閱卷後於「輸入分數」手動填入，系統會自動加總並依 ${EXAM_PASS_SCORE} 分判定合格／不合格。
@@ -1735,6 +1835,11 @@ function renderExamHistoryTable(records){
 
 function generateExam(){
   if(!examGenEmployeeId){ showToast('請先建立員工'); return; }
+  const scope = sessionScopeClass();
+  if(scope){
+    const emp = employees.find(e=>e.id===examGenEmployeeId);
+    if(!emp || emp.empClass !== scope){ showToast('此員工不在你負責的課別範圍內'); return; }
+  }
   const stage = examGenStage;
   const pool = storeQuestionBank[stage] || [];
   if(pool.length < 1){ showToast('此階段題庫目前沒有題目'); return; }
@@ -1958,7 +2063,15 @@ function renderPlaceholder(title){
 function openEmpModal(){
   document.getElementById('newEmpName').value = '';
   document.getElementById('newEmpCode').value = '';
-  document.getElementById('newEmpClass').value = '';
+  const classSelect = document.getElementById('newEmpClass');
+  const scope = sessionScopeClass();
+  if(scope){
+    classSelect.value = scope;
+    classSelect.disabled = true;
+  } else {
+    classSelect.value = '';
+    classSelect.disabled = false;
+  }
   document.getElementById('empModal').classList.add('show');
 }
 function closeEmpModal(){
@@ -1967,7 +2080,8 @@ function closeEmpModal(){
 async function addEmployee(){
   const name = document.getElementById('newEmpName').value.trim();
   const code = document.getElementById('newEmpCode').value.trim();
-  const cls = document.getElementById('newEmpClass').value;
+  const scope = sessionScopeClass();
+  const cls = scope || document.getElementById('newEmpClass').value; // 課別主管新增員工時，課別強制鎖定為自己負責的課別
   if(!name){ showToast('請輸入員工姓名'); return; }
   if(employees.some(e=>e.name===name)){ showToast('此員工已存在'); return; }
   const emp = { id: uid('emp'), name, empCode: code, empClass: cls, onboardDate:'', onboardStore:'' };
@@ -1982,14 +2096,20 @@ async function addEmployee(){
 async function removeEmployee(id){
   const emp = employees.find(e=>e.id===id);
   if(!emp) return;
-  if(!confirm('確定要移除「' + emp.name + '」及其教育訓練總表嗎？此動作無法復原。')) return;
-  employees = employees.filter(e=>e.id!==id);
-  await storageSet('employees', employees, true);
-  delete trainingData[id];
-  await storageSet('training-data:' + id, null, true);
-  if(selectedEmployeeId === id) selectedEmployeeId = null;
-  render();
-  showToast('已移除員工：' + emp.name);
+  if(!canEditEmployee(emp)){ showToast('你沒有權限移除此員工'); return; }
+  openConfirmModal(
+    '移除員工',
+    '確定要移除「' + emp.name + '」及其教育訓練總表嗎？此動作刪除後無法復原，該員工的所有訓練紀錄與測驗紀錄都會一併清除。',
+    async () => {
+      employees = employees.filter(e=>e.id!==id);
+      await storageSet('employees', employees, true);
+      delete trainingData[id];
+      await storageSet('training-data:' + id, null, true);
+      if(selectedEmployeeId === id) selectedEmployeeId = null;
+      render();
+      showToast('已移除員工：' + emp.name);
+    }
+  );
 }
 
 /* ===================== 設定：組織架構（課別／門市）管理 ===================== */
@@ -2060,7 +2180,75 @@ function renderSettings(){
       </p>
     </div>
     ${cardsHtml}
+    ${isAdmin() ? renderAccountPanel() : ''}
   `;
+}
+
+function renderAccountPanel(){
+  const rowsHtml = accounts.map(a => {
+    const roleText = a.role === 'admin' ? '管理者' : ('課別主管・' + (a.assignedClass || '未指定'));
+    const isSelf = session && session.username === a.username;
+    return `
+      <div class="emp-row">
+        <span><strong>${escapeHtml(a.username)}</strong>　${escapeHtml(a.name||'')}　<span class="bank-cat-label">${escapeHtml(roleText)}</span></span>
+        ${a.username === 'admin' ? '' : `<span class="row-x" onclick="removeAccount('${escapeHtml(a.username)}')" title="移除帳號">✕</span>`}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-title">
+        <span>帳號管理</span>
+        <button class="btn btn-gold btn-sm" onclick="openAccountModal()">＋ 新增帳號</button>
+      </div>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 14px;">預設管理者帳號（admin）無法在此移除。「課別主管」登入後僅能瀏覽與編輯自己負責課別底下的員工。</p>
+      ${rowsHtml}
+    </div>`;
+}
+
+function toggleAccountClassField(){
+  const role = document.getElementById('newAccRole').value;
+  document.getElementById('newAccClassField').style.display = role === 'class_manager' ? 'block' : 'none';
+}
+function openAccountModal(){
+  document.getElementById('newAccUsername').value = '';
+  document.getElementById('newAccPassword').value = '';
+  document.getElementById('newAccName').value = '';
+  document.getElementById('newAccRole').value = 'class_manager';
+  document.getElementById('newAccClass').value = '';
+  toggleAccountClassField();
+  document.getElementById('accountModal').classList.add('show');
+}
+function closeAccountModal(){
+  document.getElementById('accountModal').classList.remove('show');
+}
+async function addAccount(){
+  const username = document.getElementById('newAccUsername').value.trim();
+  const password = document.getElementById('newAccPassword').value;
+  const name = document.getElementById('newAccName').value.trim();
+  const role = document.getElementById('newAccRole').value;
+  const assignedClass = document.getElementById('newAccClass').value;
+  if(!username || !password){ showToast('請輸入帳號與密碼'); return; }
+  if(accounts.some(a=>a.username===username)){ showToast('此帳號已存在'); return; }
+  if(role === 'class_manager' && !assignedClass){ showToast('請選擇課別主管負責的課別'); return; }
+  const acc = { username, password, name: name || username, role };
+  if(role === 'class_manager') acc.assignedClass = assignedClass;
+  accounts.push(acc);
+  await storageSet('accounts', accounts, true);
+  closeAccountModal();
+  renderSettings();
+  showToast('已新增帳號：' + username);
+}
+async function removeAccount(username){
+  if(username === 'admin'){ showToast('預設管理者帳號無法移除'); return; }
+  const acc = accounts.find(a=>a.username===username);
+  if(!acc) return;
+  openConfirmModal('移除帳號', '確定要移除帳號「' + username + '」嗎？此動作無法復原。', async () => {
+    accounts = accounts.filter(a=>a.username!==username);
+    await storageSet('accounts', accounts, true);
+    renderSettings();
+    showToast('已移除帳號：' + username);
+  });
 }
 
 function updateOrgClassField(cls, field, value){
@@ -2072,11 +2260,12 @@ function updateOrgStore(cls, idx, field, value){
   persistOrgStructure();
 }
 function deleteOrgStore(cls, idx){
-  if(!confirm('確定要移除這間門市嗎？')) return;
-  orgStructure[cls].stores.splice(idx,1);
-  persistOrgStructure();
-  renderSettings();
-  showToast('已移除門市');
+  openConfirmModal('移除門市', '確定要移除這間門市嗎？此動作無法復原。', () => {
+    orgStructure[cls].stores.splice(idx,1);
+    persistOrgStructure();
+    renderSettings();
+    showToast('已移除門市');
+  });
 }
 function addOrgStore(cls){
   const code = document.getElementById('newStoreCode_' + cls).value.trim();
