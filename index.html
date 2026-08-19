@@ -691,23 +691,24 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase（compat 版本，才能直接搭配現有的 onclick="..." 寫法） -->
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK（compat 版本，直接用 script 標籤載入，不需要 npm/打包工具） -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-/* ===================== Firebase 連線設定 ===================== */
+/* ===================== Firebase 初始化 ===================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyCKek9JCJJe3ZYX7DWlthlXQd-ksUHmxGk",
+  apiKey: "AIzaSyCKek9JCJJe3ZYX7DWlthLXQd-ksUHmxGk",
   authDomain: "training-system-d085c.firebaseapp.com",
   projectId: "training-system-d085c",
   storageBucket: "training-system-d085c.firebasestorage.app",
   messagingSenderId: "826254507563",
-  appId: "1:826254507563:web:4fd1baea77a921e484f46e"
+  appId: "1:826254507563:web:4fd1baea77a921e484f46e",
+  measurementId: "G-HR6G42H746"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const FIRESTORE_COLLECTION = 'training-system';
+const APP_DATA_COLLECTION = 'training-system'; // Firestore 集合名稱，對齊既有資料（原先誤用 app-data，已修正）
 
 /* ===================== 資料模板（比照門市業務部教育訓練總表） ===================== */
 const ONBOARDING_ITEMS = [
@@ -847,31 +848,35 @@ function showToast(msg){
   showToast._timer = setTimeout(()=> t.classList.remove('show'), 2200);
 }
 async function storageGet(key, shared){
-  if(!shared){
-    // 非共用資料（例如「記住我」的登入資訊）：只存在使用者自己的瀏覽器
-    try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-    catch(e){ return null; }
-  }
   try{
-    const snap = await db.collection(FIRESTORE_COLLECTION).doc(key).get();
-    return snap.exists ? snap.data().v : null;
-  }catch(e){ console.error('storage get failed', key, e); return null; }
+    if(shared === false){
+      // 個人資料（例如記住的登入帳密）只存在這台瀏覽器本機，不上雲端資料庫
+      const raw = localStorage.getItem('local:' + key);
+      return raw ? JSON.parse(raw) : null;
+    }
+    const doc = await db.collection(APP_DATA_COLLECTION).doc(key).get();
+    if(!doc.exists) return null;
+    const data = doc.data();
+    return (data && data.value !== undefined) ? JSON.parse(data.value) : null;
+  } catch(e){
+    console.error('storageGet failed', key, e);
+    return null;
+  }
 }
 async function storageSet(key, value, shared){
-  if(!shared){
-    try{
-      if(value === null || value === undefined) localStorage.removeItem(key);
-      else localStorage.setItem(key, JSON.stringify(value));
-    }catch(e){ /* ignore */ }
-    return;
-  }
   try{
-    if(value === null || value === undefined){
-      await db.collection(FIRESTORE_COLLECTION).doc(key).delete();
-    } else {
-      await db.collection(FIRESTORE_COLLECTION).doc(key).set({ v: value });
+    if(shared === false){
+      if(value === null || value === undefined) localStorage.removeItem('local:' + key);
+      else localStorage.setItem('local:' + key, JSON.stringify(value));
+      return;
     }
-  }catch(e){ console.error('storage set failed', key, e); showToast('雲端儲存失敗，請確認網路連線'); }
+    await db.collection(APP_DATA_COLLECTION).doc(key).set({
+      value: JSON.stringify(value),
+      updatedAt: new Date().toISOString(),
+    });
+  } catch(e){
+    console.error('storageSet failed', key, e);
+  }
 }
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, s => ({
@@ -1009,7 +1014,7 @@ function switchTab(tab){
 async function render(){
   const titles = {
     training: ['員工訓練表', '點選員工即可查看該員工的教育訓練總表'],
-    product:  ['商品測驗', '商品知識測驗內容建置中'],
+    product:  ['商品測驗', '商品類教育訓練由「Beutii 學習系統」提供'],
     store:    ['店務測驗', '完整題庫維護與正式考題產生'],
     rules:    ['規則', '新人訓練與考核制度說明'],
     settings: ['設定', '組織架構：課別與所屬門市管理'],
@@ -1030,6 +1035,8 @@ async function render(){
     await renderStoreTab();
   } else if(currentTab === 'settings'){
     renderSettings();
+  } else if(currentTab === 'product'){
+    renderProductRedirect();
   } else {
     renderPlaceholder(titles[currentTab][0]);
   }
@@ -1910,6 +1917,28 @@ async function saveGrade(){
 }
 
 /* ---- 商品測驗 / 店務測驗（佔位頁） ---- */
+
+/* ---- 商品測驗（轉跳至小彤製作的 Beutii 學習系統） ---- */
+const PRODUCT_SYSTEM_URL = 'https://beutii.netlify.app/';
+
+function renderProductRedirect(){
+  document.getElementById('topbarActions').innerHTML = '';
+  document.getElementById('content').innerHTML = `
+    <div class="panel">
+      <div class="empty-state">
+        <div class="big">🎓</div>
+        <h2>商品測驗</h2>
+        <p>商品類教育訓練由「Beutii 學習系統」提供，請點選下方按鈕前往（將另開新分頁）。</p>
+        <div style="margin-top:16px;">
+          <a href="${PRODUCT_SYSTEM_URL}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="display:inline-flex; text-decoration:none;">
+            前往商品測驗系統 ↗
+          </a>
+        </div>
+        <p style="margin-top:14px; font-size:11.5px; color:var(--ink-soft);">網址：${PRODUCT_SYSTEM_URL}</p>
+      </div>
+    </div>
+  `;
+}
 
 function renderPlaceholder(title){
   document.getElementById('topbarActions').innerHTML = '';
